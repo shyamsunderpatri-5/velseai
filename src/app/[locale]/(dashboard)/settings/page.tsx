@@ -23,7 +23,10 @@ import {
   ExternalLink,
   Loader2,
   Crown,
+  Smartphone,
+  MessageCircle,
 } from "lucide-react";
+import { WhatsAppSettings } from "@/components/settings/WhatsAppSettings";
 
 interface Profile {
   id: string;
@@ -57,6 +60,7 @@ export default function SettingsPage() {
   const [formData, setFormData] = React.useState({
     fullName: "",
   });
+  const [whatsappSession, setWhatsappSession] = React.useState<any>(null);
 
   React.useEffect(() => {
     fetchSettings();
@@ -70,6 +74,7 @@ export default function SettingsPage() {
         setProfile(data.profile);
         setFormData({ fullName: data.profile.full_name || "" });
         setSubscriptions(data.subscriptions || []);
+        setWhatsappSession(data.whatsappSession);
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -155,6 +160,10 @@ export default function SettingsPage() {
           <TabsTrigger value="security">
             <Shield className="w-4 h-4 mr-2" />
             Security
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp">
+            <MessageCircle className="w-4 h-4 mr-2" />
+            WhatsApp
           </TabsTrigger>
         </TabsList>
 
@@ -346,6 +355,17 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="whatsapp">
+          <WhatsAppSettings 
+            isConnected={!!whatsappSession} 
+            connectedPhone={whatsappSession?.phone_number}
+            onStatusChange={(connected) => {
+              if (!connected) setWhatsappSession(null);
+              else fetchSettings(); // Re-fetch to get actual phone
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

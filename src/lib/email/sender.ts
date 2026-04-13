@@ -106,7 +106,7 @@ export function getWelcomeEmailHtml(name: string): string {
     <tr>
       <td style="padding: 20px 40px; background: #F9FAFB; border-top: 1px solid #E5E7EB;">
         <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
-          © 2026 VELSEAI. Built with ❤️ for Indian job seekers.<br>
+          © 2026 VELSEAI. Built with ❤️ for world-class talent.<br>
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/privacy" style="color: #6B7280;">Privacy</a> | 
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/terms" style="color: #6B7280;">Terms</a>
         </p>
@@ -179,7 +179,7 @@ export function getPaymentConfirmationHtml(name: string, plan: string): string {
     <tr>
       <td style="padding: 20px 40px; background: #F9FAFB; border-top: 1px solid #E5E7EB;">
         <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
-          © 2026 VELSEAI. Built with ❤️ for Indian job seekers.
+          © 2026 VELSEAI. Built with ❤️ for top-tier candidates.
         </p>
       </td>
     </tr>
@@ -245,7 +245,7 @@ export function getAtsScoreEmailHtml(
     <tr>
       <td style="padding: 20px 40px; background: #F9FAFB; border-top: 1px solid #E5E7EB;">
         <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
-          © 2026 VELSEAI. Built with ❤️ for Indian job seekers.
+          © 2026 VELSEAI. Built with ❤️ for ambitious professionals.
         </p>
       </td>
     </tr>
@@ -307,7 +307,7 @@ export function getPasswordResetEmailHtml(name: string, resetUrl: string): strin
     <tr>
       <td style="padding: 20px 40px; background: #F9FAFB; border-top: 1px solid #E5E7EB;">
         <p style="margin: 0; color: #9CA3AF; font-size: 12px; text-align: center;">
-          © 2026 VELSEAI. Built with love for Indian job seekers.
+          © 2026 VELSEAI. Built with love for worldwide talent.
         </p>
       </td>
     </tr>

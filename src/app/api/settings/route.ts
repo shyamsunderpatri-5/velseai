@@ -32,11 +32,19 @@ export async function GET() {
     const referralCount = referrals?.length || 0;
     const freeMonthsEarned = profile?.free_months_earned || 0;
 
+    const { data: whatsappSession } = await supabase
+      .from("whatsapp_sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
     return NextResponse.json({
       profile,
       subscriptions,
       referralCount,
       freeMonthsEarned,
+      whatsappSession,
     });
   } catch (error) {
     console.error("Error fetching settings:", error);

@@ -18,6 +18,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   razorpay_customer_id TEXT,
   stripe_customer_id TEXT,
   ats_checks_used INT DEFAULT 0,
+  username TEXT UNIQUE,
+  bio TEXT,
+  bio_public BOOLEAN DEFAULT FALSE,
   referral_code TEXT UNIQUE DEFAULT substring(gen_random_uuid()::text, 1, 8),
   referred_by UUID REFERENCES profiles(id),
   free_months_earned INT DEFAULT 0,
@@ -485,4 +488,116 @@ CREATE INDEX IF NOT EXISTS idx_job_applications_source ON job_applications(sourc
 
 ALTER PUBLICATION supabase_realtime ADD TABLE job_applications;
 ALTER PUBLICATION supabase_realtime ADD TABLE messaging_sessions;
+-- =============================================
+-- MIGRATION 016: WhatsApp Verification & Sessions
+-- =============================================
 
+CREATE TABLE IF NOT EXISTS whatsapp_verifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    phone_number TEXT NOT NULL,
+    otp_code TEXT NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS whatsapp_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    phone_number TEXT NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    verified BOOLEAN DEFAULT TRUE,
+    connected_at TIMESTAMPTZ DEFAULT NOW(),
+    disconnected_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id)
+);
+
+-- RLS for WhatsApp tables
+ALTER TABLE whatsapp_verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_sessions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own WA verifications" ON whatsapp_verifications
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can view own WA sessions" ON whatsapp_sessions
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_user_id ON whatsapp_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_phone ON whatsapp_sessions(phone_number);
+
+-- =============================================
+-- MIGRATION 017: AI Mock Interviews
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS interview_sessions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    job_title TEXT NOT NULL,
+    company_name TEXT NOT NULL,
+    job_description TEXT NOT NULL,
+    difficulty TEXT DEFAULT 'mid-level',
+    interview_type TEXT DEFAULT 'technical',
+    status TEXT DEFAULT 'ongoing' CHECK (status IN ('ongoing', 'completed')),
+    overall_score INT,
+    feedback JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS interview_messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    session_id UUID NOT NULL REFERENCES interview_sessions(id) ON DELETE CASCADE,
+    role TEXT NOT NULL CHECK (role IN ('assistant', 'user', 'system')),
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- RLS for Interview tables
+ALTER TABLE interview_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE interview_messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own interview sessions" ON interview_sessions
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can manage own interview messages" ON interview_messages
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM interview_sessions 
+            WHERE interview_sessions.id = interview_messages.session_id 
+            AND interview_sessions.user_id = auth.uid()
+        )
+    );
+
+CREATE INDEX IF NOT EXISTS idx_interview_sessions_user_id ON interview_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_interview_messages_session_id ON interview_messages(session_id);
+
+-- =============================================
+-- MIGRATION 018: Career Roadmaps & Skill Gaps
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS skill_roadmaps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    skill_name TEXT NOT NULL,
+    category TEXT DEFAULT 'technical',
+    status TEXT DEFAULT 'to_learn' CHECK (status IN ('to_learn', 'learning', 'mastered')),
+    frequency_count INT DEFAULT 1,
+    last_detected_at TIMESTAMPTZ DEFAULT NOW(),
+    priority TEXT DEFAULT 'medium' CHECK (priority IN ('critical', 'high', 'medium', 'low')),
+    learning_resources JSONB DEFAULT '[]',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(user_id, skill_name)
+);
+
+-- RLS for Roadmaps
+ALTER TABLE skill_roadmaps ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own roadmaps" ON skill_roadmaps
+    FOR ALL USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_skill_roadmaps_user_id ON skill_roadmaps(user_id);
+CREATE INDEX IF NOT EXISTS idx_skill_roadmaps_status ON skill_roadmaps(status);
