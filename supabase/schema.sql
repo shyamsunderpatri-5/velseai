@@ -333,3 +333,156 @@ CREATE TABLE IF NOT EXISTS jd_extractions (
 );
 
 CREATE INDEX IF NOT EXISTS idx_jd_extractions_user_id ON jd_extractions(user_id);
+
+-- =============================================
+-- MIGRATION 010: Fix anonymous_ats_checks — add lifetime_checks column
+-- (The /api/ats-score route already references this column)
+-- =============================================
+
+ALTER TABLE anonymous_ats_checks
+  ADD COLUMN IF NOT EXISTS lifetime_checks INT DEFAULT 0;
+
+-- =============================================
+-- MIGRATION 011: User Job Preferences
+-- Personalized job discovery: locations, skills, salary, job type.
+-- Auto-populated from resume JSON on first ATS check.
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS user_job_preferences (
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id       UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  -- Preferred locations (e.g. ['Berlin', 'Remote', 'Munich'])
+  locations     TEXT[] DEFAULT ARRAY[]::TEXT[],
+  -- Skills extracted from resume or manually added
+  skills        TEXT[] DEFAULT ARRAY[]::TEXT[],
+  -- Target roles / titles
+  target_roles  TEXT[] DEFAULT ARRAY[]::TEXT[],
+  -- Salary expectations
+  salary_min    INT,
+  salary_max    INT,
+  salary_currency TEXT DEFAULT 'USD',
+  -- Job type preference
+  job_type      TEXT DEFAULT 'any' CHECK (job_type IN ('any', 'full_time', 'part_time', 'contract', 'remote', 'hybrid')),
+  -- Email alert preferences
+  alert_email   BOOLEAN DEFAULT TRUE,
+  alert_whatsapp BOOLEAN DEFAULT FALSE,
+  alert_frequency TEXT DEFAULT 'daily' CHECK (alert_frequency IN ('daily', 'weekly', 'never')),
+  -- TheirStack-compatible industry filter
+  industries    TEXT[] DEFAULT ARRAY[]::TEXT[],
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE user_job_preferences ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can CRUD own job preferences" ON user_job_preferences FOR ALL USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_user_job_preferences_user_id ON user_job_preferences(user_id);
+
+CREATE TRIGGER update_user_job_preferences_updated_at
+  BEFORE UPDATE ON user_job_preferences
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================
+-- MIGRATION 012: Cached Recent Jobs
+-- 24-hour cache of TheirStack/external job results.
+-- Reduces API calls and improves response time.
+-- Cache key = location + skills hash. Expires via expires_at.
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS cached_recent_jobs (
+  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- Composite cache key: hash of location+skills filter
+  cache_key       TEXT NOT NULL UNIQUE,
+  -- Raw API response from TheirStack (array of job objects)
+  jobs_data       JSONB NOT NULL DEFAULT '[]',
+  -- Location filter used to fetch these jobs
+  location        TEXT,
+  -- Skills filter used
+  skills          TEXT[],
+  -- Number of jobs in this cache entry
+  job_count       INT DEFAULT 0,
+  -- API source used (theirstack, adzuna, remotive, mock)
+  source          TEXT DEFAULT 'theirstack',
+  -- Cache expiry — checked before serving
+  expires_at      TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '24 hours'),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- No RLS — this is read by all authenticated users, written by service role
+ALTER TABLE cached_recent_jobs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can read job cache" ON cached_recent_jobs FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Service role manages job cache" ON cached_recent_jobs FOR ALL USING (auth.jwt() IS NOT NULL);
+
+CREATE INDEX IF NOT EXISTS idx_cached_recent_jobs_cache_key ON cached_recent_jobs(cache_key);
+CREATE INDEX IF NOT EXISTS idx_cached_recent_jobs_expires_at ON cached_recent_jobs(expires_at);
+CREATE INDEX IF NOT EXISTS idx_cached_recent_jobs_location ON cached_recent_jobs(location);
+
+-- =============================================
+-- MIGRATION 013: Messaging Sessions
+-- Unified bot state machine for WhatsApp + Telegram
+-- Tracks conversation context so the bot knows what step the user is on
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS messaging_sessions (
+  id              UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  -- Link to platform-specific tables
+  user_id         UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  -- Platform identifier
+  platform        TEXT NOT NULL CHECK (platform IN ('whatsapp', 'telegram')),
+  -- Platform-specific identifier (phone for WA, chat_id for Telegram)
+  platform_id     TEXT NOT NULL,
+  -- Bot conversation state machine
+  -- States: idle | awaiting_jd_photo | processing_jd | awaiting_resume_choice | sending_resume
+  state           TEXT DEFAULT 'idle',
+  -- Contextual data persisted between messages (JD extraction, resume choice, etc.)
+  context         JSONB DEFAULT '{}',
+  -- Last WhatsApp/Telegram message_id (for idempotency / deduplication)
+  last_message_id TEXT,
+  -- Whether this session is actively linked to a VelseAI account
+  is_verified     BOOLEAN DEFAULT FALSE,
+  -- When we last heard from this user
+  last_active_at  TIMESTAMPTZ DEFAULT NOW(),
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  -- One active session per platform + platform_id
+  UNIQUE(platform, platform_id)
+);
+
+ALTER TABLE messaging_sessions ENABLE ROW LEVEL SECURITY;
+-- Users can only see their own sessions
+CREATE POLICY "Users can view own messaging sessions" ON messaging_sessions FOR SELECT USING (auth.uid() = user_id);
+-- Service role handles all writes (webhook runs as service role)
+CREATE POLICY "Service role manages messaging sessions" ON messaging_sessions FOR ALL USING (auth.jwt() IS NOT NULL);
+
+CREATE INDEX IF NOT EXISTS idx_messaging_sessions_user_id ON messaging_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_messaging_sessions_platform ON messaging_sessions(platform, platform_id);
+CREATE INDEX IF NOT EXISTS idx_messaging_sessions_last_active ON messaging_sessions(last_active_at);
+
+CREATE TRIGGER update_messaging_sessions_updated_at
+  BEFORE UPDATE ON messaging_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =============================================
+-- MIGRATION 014: Job Applications — add cover_letter_id and source_job_id
+-- cover_letter_id: link to a cover_letter generated for this application
+-- source_job_id: if this job came from cached_recent_jobs, track origin
+-- external_job_id: the TheirStack/external job board ID
+-- =============================================
+
+ALTER TABLE job_applications
+  ADD COLUMN IF NOT EXISTS cover_letter_id UUID REFERENCES cover_letters(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS source TEXT DEFAULT 'manual' CHECK (source IN ('manual', 'theirstack', 'whatsapp', 'telegram')),
+  ADD COLUMN IF NOT EXISTS external_job_id TEXT,
+  ADD COLUMN IF NOT EXISTS match_score INT,
+  ADD COLUMN IF NOT EXISTS match_reasons JSONB;
+
+CREATE INDEX IF NOT EXISTS idx_job_applications_source ON job_applications(source);
+
+-- =============================================
+-- MIGRATION 015: Enable Realtime for live Kanban updates
+-- =============================================
+
+ALTER PUBLICATION supabase_realtime ADD TABLE job_applications;
+ALTER PUBLICATION supabase_realtime ADD TABLE messaging_sessions;
+

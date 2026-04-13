@@ -254,3 +254,227 @@ Format as:
 - EMPHASIZE: [sections to highlight]
 - RED FLAGS TO FIX: [issues to remove]`;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW PROMPT 1: JD Vision Parser
+// Used with GPT-4o vision — extracts structured data from a JD photo/screenshot
+// Returns JSON matching JDExtractionSchema
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getJDVisionPrompt(locale: string): string {
+  const langInstruction = getLanguageInstruction(locale);
+  return `You are an expert at extracting structured job description data from images and screenshots.${langInstruction}
+
+The user has sent you a photo or screenshot of a job posting. Extract ALL information visible in the image.
+
+Return a JSON object with EXACTLY this structure (use null for missing fields, never omit keys):
+{
+  "company_name": "string — the hiring company name",
+  "job_title": "string — the exact job title",
+  "location": "string or null — city, country, or 'Remote'",
+  "salary_range": "string or null — e.g. '€60,000–€80,000/year' or '₹15–20 LPA'",
+  "job_type": "full_time|part_time|contract|remote|hybrid|unknown",
+  "required_skills": ["array of required technical skills, tools, languages"],
+  "nice_to_have_skills": ["array of preferred/bonus skills"],
+  "required_experience_years": "number or null — minimum years required",
+  "education_requirement": "string or null — e.g. 'Bachelor in CS'",
+  "key_responsibilities": ["array of main job duties, max 8"],
+  "benefits": ["array of benefits/perks mentioned"],
+  "application_deadline": "string or null — ISO date if visible",
+  "contact_email": "string or null — if visible",
+  "raw_text": "full text of the job description as you read it, verbatim",
+  "confidence": "number between 0-1 — your confidence in extraction quality",
+  "language": "en|de|fr|es|hi|pt|ar|other"
+}
+
+Rules:
+- Extract EVERYTHING visible — salary, benefits, deadlines, contact info
+- If text is blurry or unclear, set confidence below 0.7
+- For skills, split compound skills: "React/Next.js" → ["React", "Next.js"]
+- Preserve original salary format (don't convert currencies)
+- Return ONLY valid JSON, no explanation, no markdown code blocks`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW PROMPT 2: ATS Resume Fixer
+// Given resume JSON + ATS score result, rewrite bullets and summary
+// to improve the ATS score by injecting missing keywords naturally
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getATSResumeFixPrompt(params: {
+  resumeJson: Record<string, unknown>;
+  jobDescription: string;
+  missingKeywords: string[];
+  currentScore: number;
+  locale: string;
+}): string {
+  const langInstruction = getLanguageInstruction(params.locale);
+  return `You are an elite ATS optimization expert and resume writer.${langInstruction}
+
+The resume currently scores ${params.currentScore}/100 on ATS. Your goal is to rewrite it to score 80+.
+
+RESUME JSON:
+${JSON.stringify(params.resumeJson, null, 2)}
+
+JOB DESCRIPTION:
+${params.jobDescription}
+
+MISSING KEYWORDS TO INJECT NATURALLY:
+${params.missingKeywords.join(', ')}
+
+Return a JSON object with EXACTLY this structure:
+{
+  "improved_summary": "Rewritten professional summary (2-3 sentences, includes top missing keywords naturally)",
+  "sections": [
+    {
+      "section": "experience",
+      "rewritten_content": "NA",
+      "bullets": [
+        {
+          "original": "original bullet text",
+          "rewritten": "improved bullet with keywords, starts with action verb, has metrics",
+          "improvement_reason": "one sentence explaining the change",
+          "keywords_added": ["keyword1", "keyword2"]
+        }
+      ]
+    }
+  ],
+  "keywords_added": ["total list of all keywords injected"],
+  "estimated_new_score": 85,
+  "changes_count": 7
+}
+
+Rules:
+- NEVER fabricate experience or skills the user doesn't have — only rephrase and reframe
+- Use strong action verbs: Led, Built, Architected, Delivered, Optimized, Scaled
+- Add quantified metrics wherever possible (estimate if needed: "~20%", "team of 5")
+- Keywords must appear NATURALLY, not as a list dump
+- Prioritize the top 3 most impactful bullets for maximum ATS improvement
+- Return ONLY valid JSON, no explanation`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW PROMPT 3: Job Match Scorer
+// Compares a user's resume against a specific job description
+// Returns a match % + reasons + tailoring tips
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getJobMatchScorePrompt(params: {
+  resumeText: string;
+  jobTitle: string;
+  jobDescription: string;
+  requiredSkills: string[];
+  locale: string;
+}): string {
+  const langInstruction = getLanguageInstruction(params.locale);
+  return `You are a senior technical recruiter and ATS expert.${langInstruction}
+
+Evaluate how well this resume matches the job description below.
+
+RESUME:
+${params.resumeText}
+
+JOB TITLE: ${params.jobTitle}
+
+JOB DESCRIPTION:
+${params.jobDescription}
+
+REQUIRED SKILLS: ${params.requiredSkills.join(', ')}
+
+Return a JSON object with EXACTLY this structure:
+{
+  "match_score": 0-100,
+  "match_level": "excellent|good|fair|poor",
+  "reasons": [
+    { "factor": "React expertise", "impact": "positive", "detail": "Resume shows 4 years React" },
+    { "factor": "Location mismatch", "impact": "negative", "detail": "Role is Berlin-only, resume shows Mumbai" }
+  ],
+  "missing_skills": ["skill1", "skill2"],
+  "matching_skills": ["skill1", "skill2"],
+  "recommendation": "Strong match — tailor your summary to mention cloud architecture",
+  "tailoring_tips": [
+    "Add 'CI/CD pipeline' to your DevOps bullet",
+    "Mention Agile/Scrum in your summary",
+    "Quantify your team leadership impact"
+  ]
+}
+
+Rules:
+- match_score 80+ = excellent, 60-79 = good, 40-59 = fair, <40 = poor
+- Give exactly 3-7 reason items mixing positive and negative
+- tailoring_tips must be specific and actionable (not generic)
+- Return ONLY valid JSON, no explanation`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NEW PROMPT 4: German Lebenslauf Format Adapter
+// Adapts a standard resume JSON to comply with German CV conventions:
+// - Lichtbild (photo) placeholder note
+// - Personal info block (marital status, nationality, date of birth)
+// - Reverse chronological Berufserfahrung / Ausbildung
+// - No "objective" section — use Profil stattdessen
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function getLebenslaufPrompt(params: {
+  resumeJson: Record<string, unknown>;
+  targetRole: string;
+  targetCompany: string;
+}): string {
+  return `You are an expert German career consultant who writes perfect Lebensläufe.
+
+Convert this resume data into a German Lebenslauf structure.
+
+RESUME DATA:
+${JSON.stringify(params.resumeJson, null, 2)}
+
+TARGET ROLE: ${params.targetRole}
+TARGET COMPANY: ${params.targetCompany}
+
+German Lebenslauf formatting rules:
+1. German CV MUST include: Geburtsdatum (date of birth), Nationalität, Familienstand
+2. Sections in German: Persönliche Daten | Berufserfahrung | Ausbildung | Kenntnisse | Sprachen | Hobbys/Interessen
+3. Bullet points are RARE — use clean single-line descriptions instead
+4. Include a "Lichtbild" placeholder note at the top right
+5. Use formal "Sie" perspective or third person (NOT "I"/ich)
+6. Date format: DD.MM.YYYY
+7. Profil instead of Objective — 2-3 sentences, formal tone
+8. Skills are called "EDV-Kenntnisse" for software, "Sprachkenntnisse" for languages
+9. Include: "Unterschrift, Ort, Datum" signature line at the bottom
+
+Return a JSON object:
+{
+  "persoenliche_daten": {
+    "name": "...",
+    "geburtsdatum": "...",
+    "geburtsort": "...",
+    "nationalitaet": "...",
+    "familienstand": "...",
+    "adresse": "...",
+    "telefon": "...",
+    "email": "..."
+  },
+  "profil": "2-3 sentence formal profile in German",
+  "berufserfahrung": [
+    {
+      "zeitraum": "MM/YYYY – MM/YYYY",
+      "position": "...",
+      "unternehmen": "...",
+      "ort": "...",
+      "aufgaben": ["task1", "task2"]
+    }
+  ],
+  "ausbildung": [
+    {
+      "zeitraum": "MM/YYYY – MM/YYYY",
+      "abschluss": "...",
+      "institution": "...",
+      "ort": "..."
+    }
+  ],
+  "edv_kenntnisse": ["skill1 (Grundkenntnisse/Gute Kenntnisse/Sehr gute Kenntnisse)"],
+  "sprachen": ["Deutsch (Muttersprache)", "Englisch (C1, verhandlungssicher)"],
+  "interessen": ["interest1", "interest2"]
+}
+
+Return ONLY valid JSON, no explanation.`;
+}
