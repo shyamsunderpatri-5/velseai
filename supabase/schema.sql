@@ -265,3 +265,71 @@ CREATE INDEX IF NOT EXISTS idx_ai_usage_user_id ON ai_usage(user_id);
 
 -- ALTER PUBLICATION supabase_realtime ADD TABLE resumes;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE job_applications;
+
+-- =============================================
+-- MIGRATION 007: Job Alerts (Phase 2 scaffolding)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS job_alerts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  keywords TEXT[],
+  locations TEXT[],
+  job_boards TEXT[] DEFAULT ARRAY['linkedin', 'indeed', 'glassdoor', 'stepstone'],
+  frequency TEXT DEFAULT 'daily' CHECK (frequency IN ('daily', 'weekly')),
+  channel TEXT DEFAULT 'email' CHECK (channel IN ('email', 'whatsapp', 'telegram')),
+  is_active BOOLEAN DEFAULT TRUE,
+  last_sent_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_job_alerts_user_id ON job_alerts(user_id);
+
+-- =============================================
+-- MIGRATION 008: WhatsApp Integration (Phase 3 scaffolding)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS whatsapp_sessions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  phone_number TEXT NOT NULL,
+  verified BOOLEAN DEFAULT FALSE,
+  verification_code TEXT,
+  is_active BOOLEAN DEFAULT TRUE,
+  last_message_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS whatsapp_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  direction TEXT CHECK (direction IN ('inbound', 'outbound')),
+  message_type TEXT CHECK (message_type IN ('text', 'image', 'document', 'button_reply')),
+  content TEXT,
+  media_url TEXT,
+  wa_message_id TEXT,
+  processed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_whatsapp_sessions_user_id ON whatsapp_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_whatsapp_messages_user_id ON whatsapp_messages(user_id);
+
+-- =============================================
+-- MIGRATION 009: JD Photo Extraction (Phase 4 scaffolding)
+-- =============================================
+
+CREATE TABLE IF NOT EXISTS jd_extractions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  image_url TEXT,
+  extracted_jd TEXT,
+  company_name TEXT,
+  job_title TEXT,
+  required_skills TEXT[],
+  model_used TEXT,
+  confidence_score FLOAT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_jd_extractions_user_id ON jd_extractions(user_id);

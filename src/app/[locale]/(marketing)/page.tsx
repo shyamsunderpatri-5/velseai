@@ -169,258 +169,114 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats */}
-      <section className="py-12 border-y border-white/5 bg-white/[0.02]">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {[
-              { value: "50K+", label: "Resumes Analyzed" },
-              { value: "3x", label: "More Interviews" },
-              { value: "89%", label: "Average Score" },
-              { value: "Free", label: "To Get Started" },
-            ].map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-sm text-white/40">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24">
+      {/* Competitor Comparison */}
+      <section className="py-24 bg-white/[0.02]">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="font-heading text-4xl font-bold text-white mb-4">
-              Everything you need to land your dream job
+              Why choose VELSEAI?
             </h2>
             <p className="text-white/50 max-w-2xl mx-auto">
-              Built with AI specifically for global job seekers
+              We offer more features at half the price of our competitors
             </p>
           </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              {
-                icon: <Target className="w-6 h-6" />,
-                title: "ATS Score Checker",
-                description: "Instantly analyze your resume against ATS systems. Get your score in 10 seconds.",
-                color: "from-emerald-500 to-teal-500"
-              },
-              {
-                icon: <Bot className="w-6 h-6" />,
-                title: "AI Resume Builder",
-                description: "Build ATS-optimized resumes with AI. Choose from 5 professional templates.",
-                color: "from-violet-500 to-purple-500"
-              },
-              {
-                icon: <Brain className="w-6 h-6" />,
-                title: "AI Writing Assistant",
-                description: "Generate bullet points, summaries, and cover letters that highlight your achievements.",
-                color: "from-fuchsia-500 to-pink-500"
-              },
-              {
-                icon: <FileText className="w-6 h-6" />,
-                title: "5 ATS Templates",
-                description: "Professional, ATS-friendly templates designed for global job markets.",
-                color: "from-blue-500 to-cyan-500"
-              },
-              {
-                icon: <BarChart3 className="w-6 h-6" />,
-                title: "Job Tracker",
-                description: "Track all your applications in one place. Never miss a follow-up.",
-                color: "from-amber-500 to-orange-500"
-              },
-              {
-                icon: <Clock className="w-6 h-6" />,
-                title: "Instant Results",
-                description: "No waiting. Get detailed analysis and actionable suggestions immediately.",
-                color: "from-rose-500 to-red-500"
-              },
-            ].map((feature, i) => (
-              <Card key={i} className="bg-white/[0.02] border-white/5 hover:border-white/10 transition-all group">
-                <CardContent className="p-6">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-4 text-white`}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="font-heading text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                  <p className="text-white/50 text-sm">{feature.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+          
+          <div className="overflow-x-auto">
+            <table className="w-full max-w-4xl mx-auto text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-4 px-4 text-white font-medium">Feature</th>
+                  <th className="py-4 px-4 text-violet-400 font-medium">VELSEAI</th>
+                  <th className="py-4 px-4 text-white/50 font-medium">Rezi</th>
+                  <th className="py-4 px-4 text-white/50 font-medium">Teal</th>
+                  <th className="py-4 px-4 text-white/50 font-medium">Kickresume</th>
+                  <th className="py-4 px-4 text-white/50 font-medium">Jobscan</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">Price/month</td>
+                  <td className="py-4 px-4 text-violet-400 font-bold">$9.99</td>
+                  <td className="py-4 px-4 text-white/50">$29</td>
+                  <td className="py-4 px-4 text-white/50">$29</td>
+                  <td className="py-4 px-4 text-white/50">$19</td>
+                  <td className="py-4 px-4 text-white/50">$49</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">Languages</td>
+                  <td className="py-4 px-4 text-violet-400 font-bold">7</td>
+                  <td className="py-4 px-4 text-white/50">1</td>
+                  <td className="py-4 px-4 text-white/50">1</td>
+                  <td className="py-4 px-4 text-white/50">3</td>
+                  <td className="py-4 px-4 text-white/50">1</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">ATS Score Checker</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">AI Resume Builder</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">Job Tracker</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">DOCX Export</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">Cover Letter AI</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">German Lebenslauf</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr className="border-b border-white/5">
+                  <td className="py-4 px-4 text-white">Arabic RTL</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+                <tr>
+                  <td className="py-4 px-4 text-white">Free ATS Checker</td>
+                  <td className="py-4 px-4 text-emerald-400">✓</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                  <td className="py-4 px-4 text-white/20">✗</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="py-24 bg-white/[0.02]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-heading text-4xl font-bold text-white mb-4">
-              How it works
-            </h2>
-            <p className="text-white/50">Get your ATS score in 3 simple steps</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { step: "01", title: "Paste your resume", description: "Upload or paste your resume text" },
-              { step: "02", title: "Add job description", description: "Paste the job description you're targeting" },
-              { step: "03", title: "Get your score", description: "See your ATS score and improvement tips" },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                <div className="text-8xl font-bold text-white/[0.03] absolute -top-4 -left-2">{item.step}</div>
-                <div className="relative pt-8">
-                  <h3 className="font-heading text-xl font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-white/50">{item.description}</p>
-                </div>
-                {i < 2 && (
-                  <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 text-white/20">
-                    <ArrowRight className="w-6 h-6" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/ats-checker">
-              <Button size="lg" className="bg-violet-600 hover:bg-violet-700 text-white px-8">
-                Try It Now — It's Free
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Preview */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-heading text-4xl font-bold text-white mb-4">
-              Simple, transparent pricing
-            </h2>
-            <p className="text-white/50">Start free, upgrade when you're ready</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[{ 
-                name: "Free", 
-                price: "$0", 
-                desc: "Perfect to get started",
-                features: ["1 resume", "3 templates", "3 ATS checks/day", "5 AI uses/day"],
-                cta: "Get Started",
-                popular: false
-              },
-              { 
-                name: "Starter", 
-                price: "$9.99", 
-                desc: "For serious job seekers",
-                features: ["5 resumes", "All templates", "Unlimited ATS", "50 AI uses/day", "Job tracker"],
-                cta: "Start Trial",
-                popular: true
-              },
-              { 
-                name: "Pro", 
-                price: "$14.99", 
-                desc: "For professionals",
-                features: ["Unlimited resumes", "Everything in Starter", "Unlimited AI", "Priority support"],
-                cta: "Go Pro",
-                popular: false
-              },
-            ].map((plan, i) => (
-              <Card key={i} className={`bg-white/[0.02] border ${plan.popular ? 'border-violet-500/50' : 'border-white/5'} relative`}>
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-violet-600 text-white">Most Popular</Badge>
-                  </div>
-                )}
-                <CardContent className="p-6">
-                  <div className="text-center mb-6">
-                    <h3 className="font-heading text-xl font-semibold text-white mb-1">{plan.name}</h3>
-                    <div className="text-4xl font-bold text-white mb-1">{plan.price}<span className="text-lg text-white/40">/mo</span></div>
-                    <p className="text-white/50 text-sm">{plan.desc}</p>
-                  </div>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-center gap-2 text-white/70 text-sm">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link href="/pricing">
-                    <Button className={`w-full ${plan.popular ? 'bg-violet-600 hover:bg-violet-700' : 'bg-white/10 hover:bg-white/20'} text-white`}>
-                      {plan.cta}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-24 bg-white/[0.02]">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="font-heading text-4xl font-bold text-white mb-4">
-              Loved by job seekers
-            </h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              { name: "Priya R.", role: "Software Engineer", content: "My ATS score went from 42% to 89%. Landed 3 interviews in one week!", score: "+47 pts" },
-              { name: "Rahul S.", role: "Data Analyst", content: "The keyword analysis helped me tailor my resume perfectly. Highly recommend!", score: "55% → 82%" },
-              { name: "Anita M.", role: "Product Manager", content: "As a career changer, VELSEAI helped me highlight transferable skills effectively.", score: "Hired in 2 weeks" },
-            ].map((t, i) => (
-              <Card key={i} className="bg-white/[0.02] border-white/5">
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-violet-400 text-violet-400" />)}
-                  </div>
-                  <p className="text-white/70 mb-4">"{t.content}"</p>
-                  <div className="pt-4 border-t border-white/5">
-                    <p className="font-medium text-white">{t.name}</p>
-                    <p className="text-sm text-white/40">{t.role}</p>
-                    <Badge className="mt-2 bg-emerald-500/20 text-emerald-400">{t.score}</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-24">
-        <div className="container mx-auto px-4">
-          <Card className="bg-gradient-to-r from-violet-600 to-fuchsia-600 border-0">
-            <CardContent className="py-16 text-center">
-              <h2 className="font-heading text-4xl font-bold text-white mb-4">
-                Ready to beat the ATS?
-              </h2>
-              <p className="text-white/80 max-w-xl mx-auto mb-8">
-                Start for free. No credit card required.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/ats-checker">
-                  <Button size="lg" className="bg-white text-violet-600 hover:bg-white/90 px-8">
-                    Check Your ATS Score Free
-                  </Button>
-                </Link>
-                <Link href="/auth/signup">
-                  <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 px-8">
-                    Build Your Resume
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </section>
 
