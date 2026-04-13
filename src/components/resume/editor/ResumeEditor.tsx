@@ -17,6 +17,7 @@ import { CertificationsSection } from "./CertificationsSection";
 import { ResumePreview } from "../preview/ResumePreview";
 import { createClient } from "@/lib/supabase/client";
 import { useResumeStore } from "@/stores/resumeStore";
+import { trackEvent } from "@/lib/analytics/posthog";
 import { DEFAULT_RESUME_SETTINGS } from "@/types/resume";
 import toast from "react-hot-toast";
 import {
@@ -131,6 +132,7 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       toast.success("PDF downloaded", { id: "pdf-export" });
+      trackEvent("export_clicked", { format: "pdf" });
     } catch (error) {
       toast.error("Failed to generate PDF", { id: "pdf-export" });
     }
@@ -152,6 +154,7 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
       toast.success("DOCX downloaded", { id: "docx-export" });
+      trackEvent("export_clicked", { format: "docx" });
     } catch (error) {
       toast.error("Failed to generate DOCX", { id: "docx-export" });
     }

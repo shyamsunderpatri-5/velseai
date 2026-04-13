@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/analytics/posthog";
 import { Loader2, AlertCircle } from "lucide-react";
 
 export function LoginForm() {
@@ -39,6 +40,7 @@ export function LoginForm() {
       return;
     }
 
+    trackEvent("user_logged_in", { method: "email" });
     router.push("/dashboard");
     router.refresh();
   };

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/analytics/posthog";
 import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export function SignupForm() {
@@ -81,9 +82,10 @@ export function SignupForm() {
 
       // If user created successfully, redirect
       if (data.user) {
+        trackEvent("user_signed_up", { method: "email" });
         router.push("/auth/verify-email?email=" + encodeURIComponent(email));
       } else if (data.session) {
-        // Email confirmation not required, already logged in
+        trackEvent("user_signed_up", { method: "email" });
         router.push("/dashboard");
       }
     } catch (err) {
