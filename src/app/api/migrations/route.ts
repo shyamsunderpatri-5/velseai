@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
+function generateChecksum(sql: string): string {
+  let hash = 0;
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
+}
+
 const MIGRATIONS = [
   {
     id: "001_initial_schema",
@@ -98,24 +108,30 @@ const MIGRATIONS = [
   }
 ];
 
+MIGRATIONS.forEach(m => {
+  m.checksum = generateChecksum(m.sql);
+});
+
 async function runMigrations() {
   const supabase = await createClient();
   
   try {
     const { data: applied, error: fetchError } = await supabase
       .from("schema_migrations")
-      .select("migration_id");
+      .select("migration_id, checksum");
     
     if (fetchError) {
       console.log("Migrations table not found:", fetchError.message);
       return;
     }
     
-    const appliedIds = new Set(applied?.map(m => m.migration_id) || []);
+    const appliedMap = new Map(applied?.map(m => [m.migration_id, m.checksum]) || []);
     const results: string[] = [];
     
     for (const migration of MIGRATIONS) {
-      if (!appliedIds.has(migration.id)) {
+      const appliedChecksum = appliedMap.get(migration.id);
+      
+      if (!appliedChecksum) {
         console.log(`Running migration: ${migration.id}`);
         
         const statements = migration.sql
@@ -133,10 +149,13 @@ async function runMigrations() {
         
         await supabase.from("schema_migrations").insert({
           migration_id: migration.id,
+          checksum: migration.checksum,
           applied_at: new Date().toISOString()
         });
         
         results.push(migration.id);
+      } else if (appliedChecksum !== migration.checksum) {
+        console.error(`Checksum mismatch for ${migration.id}! Expected ${migration.checksum}, got ${appliedChecksum}`);
       }
     }
     

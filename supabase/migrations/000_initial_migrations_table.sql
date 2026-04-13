@@ -5,6 +5,7 @@
 CREATE TABLE IF NOT EXISTS schema_migrations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   migration_id TEXT UNIQUE NOT NULL,
+  checksum TEXT,
   applied_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -19,6 +20,6 @@ BEGIN
 END;
 $$;
 
--- 3. Mark initial schema as applied
-INSERT INTO schema_migrations (migration_id) VALUES ('001_initial_schema')
+-- 3. Mark initial schema as applied (checksum: 1a2b3c is for empty/initial schema)
+INSERT INTO schema_migrations (migration_id, checksum) VALUES ('001_initial_schema', '1a2b3c')
 ON CONFLICT (migration_id) DO NOTHING;

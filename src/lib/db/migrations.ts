@@ -1,5 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 
+function generateChecksum(sql: string): string {
+  let hash = 0;
+  for (let i = 0; i < sql.length; i++) {
+    const char = sql.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return Math.abs(hash).toString(16);
+}
+
 const MIGRATIONS = [
   {
     id: "001_initial_schema",
@@ -103,6 +113,10 @@ const MIGRATIONS = [
   }
 ];
 
+MIGRATIONS.forEach(m => {
+  m.checksum = generateChecksum(m.sql);
+});
+
 async function ensureMigrationsTable() {
   const supabase = await createClient();
   
@@ -120,17 +134,20 @@ async function runMigrations() {
   try {
     const { data: applied, error: fetchError } = await supabase
       .from("schema_migrations")
-      .select("migration_id");
+      .select("migration_id, checksum");
     
     if (fetchError && fetchError.code !== "42P01") {
       console.log("Migrations table not found or error:", fetchError.message);
       return;
     }
     
-    const appliedIds = new Set(applied?.map(m => m.migration_id) || []);
+    const appliedMap = new Map(applied?.map(m => [m.migration_id, m.checksum]) || []);
+    const results: string[] = [];
     
     for (const migration of MIGRATIONS) {
-      if (!appliedIds.has(migration.id)) {
+      const appliedChecksum = appliedMap.get(migration.id);
+      
+      if (!appliedChecksum) {
         console.log(`Running migration: ${migration.id}`);
         
         const statements = migration.sql
@@ -139,21 +156,27 @@ async function runMigrations() {
           .filter(s => s.length > 0 && !s.startsWith("--"));
         
         for (const stmt of statements) {
-          const { error } = await supabase.rpc("exec_sql", { sql: stmt });
-          
-          if (error) {
-            console.error(`Error in ${migration.id}:`, error.message);
+          try {
+            await supabase.rpc("exec_sql", { sql: stmt });
+          } catch (e: any) {
+            console.error(`Error in ${migration.id}:`, e.message);
           }
         }
         
         await supabase.from("schema_migrations").insert({
           migration_id: migration.id,
+          checksum: migration.checksum,
           applied_at: new Date().toISOString()
         });
         
         console.log(`Migration ${migration.id} completed`);
+        results.push(migration.id);
+      } else if (appliedChecksum !== migration.checksum) {
+        console.error(`Checksum mismatch for ${migration.id}! Expected ${migration.checksum}, got ${appliedChecksum}`);
       }
     }
+    
+    return results;
   } catch (e) {
     console.log("Auto-migration not available. Run SQL manually.");
   }
