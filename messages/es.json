@@ -25,7 +25,7 @@
   },
   "hero": {
     "headline": "Vence el ATS. Consigue el Trabajo de tus Sueños.",
-    "subheadline": "El 75% de los currículums son rechazados antes de que un humano los lea. La IA de Selvo crea currículums ATS-perfectos que te logran entrevistas.",
+    "subheadline": "El 75% de los currículums son rechazados antes de que un humano los lea. La IA de VELSEAI crea currículums ATS-perfectos que te logran entrevistas.",
     "ctaPrimary": "Verifica tu Puntuación ATS — Gratis",
     "ctaSecondary": "Crear mi Currículum",
     "socialProof": "Usado por {count}+ buscadores de empleo"
@@ -137,7 +137,7 @@
   },
   "auth": {
     "loginTitle": "Bienvenido de nuevo",
-    "loginSubtitle": "Inicia sesión en tu cuenta de Selvo",
+    "loginSubtitle": "Inicia sesión en tu cuenta de VELSEAI",
     "signupTitle": "Crea tu cuenta",
     "signupSubtitle": "Únete a {count}+ buscadores de empleo superando filtros ATS",
     "emailLabel": "Correo electrónico",
@@ -168,11 +168,11 @@
     "rateLimited": "Demasiadas solicitudes. Por favor espera un momento."
   },
   "seo": {
-    "homeTitle": "Selvo — Verificador ATS Gratis y Creador de Currículums con IA",
+    "homeTitle": "VELSEAI — Verificador ATS Gratis y Creador de Currículums con IA",
     "homeDescription": "Verifica si tu currículum pasa los filtros ATS instantáneamente — sin registro necesario. Crea currículums optimizados para ATS con IA. Usado por {count}+ buscadores de empleo.",
-    "atsCheckerTitle": "Verificador Gratis de Puntuación ATS — Sin Registro | Selvo",
+    "atsCheckerTitle": "Verificador Gratis de Puntuación ATS — Sin Registro | VELSEAI",
     "atsCheckerDescription": "Pega tu currículum y descripción del puesto. Obtén tu puntuación ATS en 10 segundos. Ve exactamente qué palabras clave faltan. 100% gratis, sin cuenta requerida.",
-    "pricingTitle": "Precios — Creador de Currículums con IA Selvo",
-    "pricingDescription": "Los planes de Selvo comienzan en {price}. Incluye verificaciones ATS ilimitadas, creador de currículums con IA, plantillas, seguimiento de empleos y generador de cartas."
+    "pricingTitle": "Precios — Creador de Currículums con IA VELSEAI",
+    "pricingDescription": "Los planes de VELSEAI comienzan en {price}. Incluye verificaciones ATS ilimitadas, creador de currículums con IA, plantillas, seguimiento de empleos y generador de cartas."
   }
 }

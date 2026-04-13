@@ -1,60 +1,97 @@
-# Selvo - AI ATS Resume Builder
+# VELSEAI — AI ATS Resume Builder
 
 <p align="center">
-  <img src="public/logo.svg" alt="Selvo Logo" width="120" />
+  <strong>Beat the ATS. Get the Interview. In Any Language.</strong>
 </p>
 
 <p align="center">
-  <strong>Beat the ATS. Get the Interview.</strong>
+  The only AI resume builder that beats ATS filters in 7 languages — at half the price of Rezi, Teal, and Kickresume.
 </p>
 
 <p align="center">
-  An AI-powered ATS resume builder targeted at Indian, Southeast Asian, and emerging market job seekers.
-</p>
-
-<p align="center">
-  <a href="https://selvo.in">selvo.in</a> •
+  <a href="https://velseai.com">velseai.com</a> •
   <a href="#features">Features</a> •
+  <a href="#pricing">Pricing</a> •
   <a href="#tech-stack">Tech Stack</a> •
-  <a href="#getting-started">Getting Started</a> •
-  <a href="#documentation">Documentation</a>
+  <a href="#getting-started">Getting Started</a>
 </p>
 
 ---
 
 ## Features
 
-### Free ATS Checker (No Login Required)
+### 🎯 Free ATS Checker (No Login Required)
 - **Instant Analysis**: Get your ATS score in under 10 seconds
-- **Keyword Optimization**: Identify missing keywords and get actionable suggestions
-- **Format Scoring**: Check if your resume is ATS-friendly
-- **Rate Limited**: 3 checks/day for anonymous users (10/day when logged in)
+- **Keyword Optimization**: Identify missing keywords with actionable suggestions
+- **4 Sub-Scores**: Keywords (40%), Format (25%), Skills (20%), Experience (15%)
+- **Rate Limited**: 3 checks LIFETIME per IP for anonymous users (unlimited when logged in)
+- **Share Results**: WhatsApp & LinkedIn sharing with score
 
-### Resume Builder
-- **5 Professional Templates**: Modern, Classic, Creative, Minimal, Tech
+### 📄 Resume Builder
+- **7 Professional Templates**: Modern, Classic, Creative, Minimal, Tech, German Lebenslauf, Arabic RTL
+- **9 Sections**: Personal Info, Summary, Experience, Education, Skills, Projects, Certifications, Languages, Achievements
 - **Real-time Preview**: See changes as you type
-- **Auto-save**: Never lose your work
-- **Multiple Resumes**: Create and manage multiple versions
+- **Auto-save**: Saves every 30 seconds
+- **Multiple Resumes**: Create and manage unlimited versions
 
-### AI Features
+### 🤖 AI Features
 - **Bullet Point Generator**: Create achievement-focused bullets with quantified results
 - **Resume Summary Writer**: Generate compelling professional summaries
-- **Skill Suggestions**: Get recommendations based on your target role
-- **AI powered by Ollama (free, local) or OpenAI (fallback)**
+- **Skill Suggestions**: Get recommendations based on target role
+- **Cover Letter Generator**: AI-powered cover letters
+- **"Fix My Entire Resume"**: One-click AI improvement (bullet points + summary + skills)
+- **7 Languages**: AI responds in user's language (EN, DE, FR, ES, PT, AR, HI)
+- **Powered by Ollama (free, local) or OpenAI GPT-4o-mini (fallback)**
 
-### Job Tracker
-- **Kanban Board**: Visual pipeline for your applications
-- **Status Tracking**: Saved → Applied → Phone Screen → Interview → Offer
-- **ATS Score Integration**: Track scores for each application
-- **Salary & Location**: Keep track of important details
+### 💼 Job Tracker
+- **Kanban Board**: Visual pipeline (Saved → Applied → Phone Screen → Interview → Offer → Rejected → Withdrawn)
+- **Status Tracking**: Full application lifecycle
+- **ATS Score Integration**: Track scores per application
+- **Salary & Location**: Track important details
+- **CSV Export**: Export all applications
 
-### Pricing
+### 🌍 Multilingual (7 Languages)
+- 🇺🇸 English (en)
+- 🇩🇪 German (de) — including German Lebenslauf template
+- 🇫🇷 French (fr)
+- 🇪🇸 Spanish (es)
+- 🇧🇷 Portuguese (pt)
+- 🇦🇪 Arabic (ar) — full RTL support
+- 🇮🇳 Hindi (hi) — for diaspora
+
+### 📤 Exports
+- **PDF Export**: A4 format with Puppeteer
+- **DOCX Export**: Word format
+- **Watermark**: Free plan includes watermark, paid plans no watermark
+
+### 💳 Payments (Stripe Only)
+- **Global**: USD, EUR, BRL based on locale
+- **Monthly & Yearly**: 30% discount for yearly
+- **Lifetime Deal**: One-time payment
+
+---
+
+## Pricing
+
 | Plan | Price | Features |
 |------|-------|----------|
-| Free | ₹0 | 1 resume, 3 ATS checks/day, 5 AI uses/day |
-| Starter | ₹199/mo | 5 resumes, unlimited ATS, 50 AI uses/day |
-| Pro | ₹499/mo | Unlimited everything |
-| Lifetime | ₹2,999 one-time | Pro forever |
+| Free | $0 | 1 resume, 3 templates, 3 ATS checks LIFETIME, 5 AI uses/day, PDF (watermark) |
+| Starter | $9.99/mo | 5 resumes, all templates, unlimited ATS, 50 AI uses/day, PDF+DOCX, Job tracker |
+| Pro | $14.99/mo | Unlimited resumes & AI, no watermark, public resume links, priority support |
+| Lifetime | $49 one-time | Everything in Pro, forever |
+
+**Competitor Comparison:**
+
+| Feature | VELSEAI | Rezi | Teal | Kickresume | Jobscan |
+|---------|---------|------|------|------------|---------|
+| Price/mo | $9.99 | $29 | $29 | $19 | $49 |
+| Languages | 7 | 1 | 1 | 3 | 1 |
+| ATS Score | ✅ | ✅ | ✅ | ❌ | ✅ |
+| AI Builder | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Job Tracker | ✅ | ❌ | ✅ | ❌ | ❌ |
+| German CV | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Arabic RTL | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Free Checker | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
@@ -62,11 +99,15 @@
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Backend**: Next.js API Routes + Supabase (PostgreSQL + Auth + Storage)
-- **AI**: Ollama (local, free) with fallback to OpenAI GPT-4o-mini
-- **PDF Generation**: Puppeteer
+- **i18n**: next-intl (7 locales)
+- **AI**: Ollama (local, free) with OpenAI GPT-4o-mini fallback
+- **PDF**: Puppeteer + pdf-lib
+- **DOCX**: html-docx-js
 - **Email**: Nodemailer + Brevo SMTP
-- **Payments**: Razorpay (India) + Stripe (International)
-- **State**: Zustand (client), React Query (server)
+- **Payments**: Stripe (handles USD, EUR, GBP, BRL)
+- **Analytics**: PostHog
+- **Errors**: Sentry
+- **State**: Zustand
 
 ---
 
@@ -75,7 +116,7 @@
 ### Prerequisites
 
 - Node.js 18+
-- npm or pnpm
+- npm
 - Supabase account
 - (Optional) Ollama for local AI
 - (Optional) OpenAI API key
@@ -84,8 +125,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/selvo.git
-cd selvo
+git clone https://github.com/shyamsunderpatri-5/velseai.git
+cd velseai
 
 # Install dependencies
 npm install
@@ -115,14 +156,20 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 OLLAMA_BASE_URL=http://localhost:11434
 OPENAI_API_KEY=sk-your-key
 
-# Payments
-RAZORPAY_KEY_ID=rzp_xxx
-RAZORPAY_KEY_SECRET=xxx
+# Payments (Stripe only)
 STRIPE_SECRET_KEY=sk_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Email
 BREVO_SMTP_USER=your-email
 BREVO_SMTP_PASS=your-brevo-key
+
+# Analytics (optional)
+NEXT_PUBLIC_POSTHOG_KEY=phc_xxx
+POSTHOG_API_KEY=phc_xxx
+
+# Errors (optional)
+SENTRY_DSN=https://xxx@sentry.io/xxx
 ```
 
 ### Run Development Server
@@ -154,45 +201,59 @@ ollama serve
 ## Project Structure
 
 ```
-selvo/
+velseai/
 ├── src/
 │   ├── app/
-│   │   ├── (marketing)/      # Public pages
-│   │   │   ├── page.tsx       # Landing page
-│   │   │   ├── ats-checker/   # Free ATS checker
-│   │   │   └── pricing/       # Pricing page
-│   │   ├── (dashboard)/      # Protected pages
-│   │   │   ├── dashboard/     # Main dashboard
-│   │   │   ├── resume/        # Resume builder
-│   │   │   └── jobs/          # Job tracker
-│   │   ├── api/               # API routes
-│   │   │   ├── ats-score/     # ATS scoring engine
-│   │   │   ├── ai/            # AI features
-│   │   │   └── resume/        # PDF export
-│   │   └── auth/              # Auth pages
+│   │   ├── [locale]/              # Locale-based routing
+│   │   │   ├── (marketing)/       # Public pages
+│   │   │   │   ├── page.tsx        # Landing page
+│   │   │   │   ├── ats-checker/    # Free ATS checker
+│   │   │   │   └── pricing/        # Pricing page
+│   │   │   ├── (dashboard)/        # Protected pages
+│   │   │   │   ├── dashboard/      # Main dashboard
+│   │   │   │   ├── resume/         # Resume builder
+│   │   │   │   ├── jobs/           # Job tracker
+│   │   │   │   └── settings/        # User settings
+│   │   │   └── auth/               # Auth pages
+│   │   ├── api/                    # API routes
+│   │   │   ├── ats-score/          # ATS scoring engine
+│   │   │   ├── ai/                 # AI features
+│   │   │   ├── resume/              # PDF/DOCX export
+│   │   │   ├── payment/stripe/     # Stripe checkout
+│   │   │   ├── webhooks/stripe/    # Stripe webhooks
+│   │   │   ├── job-alerts/         # Phase 2 scaffolding
+│   │   │   ├── jd-extraction/      # Phase 4 scaffolding
+│   │   │   └── webhooks/whatsapp/  # Phase 3 scaffolding
+│   │   └── sitemap.ts              # SEO sitemap
 │   ├── components/
-│   │   ├── ui/                # shadcn components
-│   │   ├── ats/                # ATS checker components
-│   │   ├── resume/             # Resume builder components
-│   │   └── dashboard/          # Dashboard components
+│   │   ├── ui/                     # shadcn components
+│   │   ├── ats/                    # ATS checker components
+│   │   ├── resume/                 # Resume builder components
+│   │   │   ├── editor/             # Resume editor
+│   │   │   └── preview/            # Resume preview + templates
+│   │   └── dashboard/              # Dashboard components
 │   ├── lib/
-│   │   ├── supabase/          # Supabase clients
-│   │   ├── ai/                # AI service layer
-│   │   └── ats/               # ATS scoring engine
-│   ├── types/                 # TypeScript types
-│   ├── stores/                # Zustand stores
-│   └── hooks/                 # Custom hooks
+│   │   ├── supabase/               # Supabase clients
+│   │   ├── ai/                     # AI service layer
+│   │   ├── ats/                    # ATS scoring engine
+│   │   ├── payments/               # Stripe integration
+│   │   ├── email/                  # Email service
+│   │   └── analytics/              # PostHog integration
+│   ├── i18n/                       # next-intl config
+│   ├── messages/                   # Translation files (en, de, fr, es, pt, ar, hi)
+│   ├── types/                      # TypeScript types
+│   ├── stores/                     # Zustand stores
+│   └── proxy.ts                    # Middleware
 ├── supabase/
-│   └── schema.sql             # Database schema
-└── public/                    # Static assets
+│   └── schema.sql                  # Database schema
+└── public/                         # Static assets
 ```
 
 ---
 
 ## Database Schema
 
-The database includes:
-
+### Core Tables
 - `profiles` - User profiles (extends Supabase auth)
 - `resumes` - User resumes with JSON content
 - `ats_scores` - ATS check history
@@ -200,8 +261,14 @@ The database includes:
 - `cover_letters` - Generated cover letters
 - `subscriptions` - Payment subscriptions
 - `ai_usage` - AI feature usage tracking
-- `anonymous_ats_checks` - Rate limiting for free users
+- `anonymous_ats_checks` - Rate limiting for free users (lifetime 3 checks)
 - `email_queue` - Async email sending queue
+
+### Phase 2-4 Scaffolding
+- `job_alerts` - Job search alerts (coming soon)
+- `whatsapp_sessions` / `whatsapp_messages` - WhatsApp integration (coming soon)
+- `jd_extractions` - JD photo extraction (coming soon)
+- `user_ip_tracking` - Account sharing detection
 
 All tables have Row Level Security (RLS) enabled.
 
@@ -216,16 +283,40 @@ All tables have Row Level Security (RLS) enabled.
 - `POST /api/ai/bullet-points` - Generate achievement bullets
 - `POST /api/ai/resume-summary` - Generate professional summary
 - `POST /api/ai/skill-suggestions` - Get skill recommendations
+- `POST /api/ai/cover-letter` - Generate cover letter
+- `POST /api/ai/interview-questions` - Practice questions
+- `POST /api/ai/job-tailoring` - Tailor resume to job
+- `POST /api/ai/career-advice` - Career guidance
+- `POST /api/ai/remote-work` - Remote work optimization
 
 ### Resume
 - `GET /api/resume/export-pdf` - Export resume as PDF
 - `GET /api/resume/export-docx` - Export resume as DOCX
+
+### Payments
+- `POST /api/payment/stripe` - Create Stripe checkout session
+- `POST /api/webhooks/stripe` - Handle Stripe webhooks
 
 ### Jobs
 - `GET /api/jobs` - List user's job applications
 - `POST /api/jobs` - Create job application
 - `PUT /api/jobs/[id]` - Update job application
 - `DELETE /api/jobs/[id]` - Delete job application
+
+### Utilities
+- `POST /api/utils/share-detection` - Detect account sharing
+- `POST /api/job-alerts` - Job alert management (Phase 2)
+- `POST /api/jd-extraction` - JD photo extraction (Phase 4)
+
+---
+
+## Analytics Events (PostHog)
+
+- `user_signed_up` - Sign up events
+- `user_logged_in` - Login events
+- `ats_check_completed` - ATS check results
+- `export_clicked` - PDF/DOCX exports
+- `fix_resume_clicked` - AI resume improvement
 
 ---
 
@@ -238,30 +329,19 @@ All tables have Row Level Security (RLS) enabled.
 3. Add environment variables
 4. Deploy
 
-### Railway (Optional)
+---
 
-For background workers and additional compute:
-- Deploy Supabase separately or use hosted Supabase
-- Deploy API routes as separate services
+## Target Markets
+
+1. 🇺🇸 USA / Canada / Australia — English, USD
+2. 🇩🇪 Germany / Austria / Switzerland — German, EUR
+3. 🇫🇷 France / Belgium — French, EUR
+4. 🇧🇷 Brazil — Portuguese, BRL
+5. 🇦🇪 UAE / Saudi Arabia — Arabic, USD
+6. 🇵🇭 Philippines / 🇳🇬 Nigeria — English, USD
 
 ---
 
-## Contributing
+## Built with ❤️ for job seekers worldwide
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## License
-
-This project is proprietary software. All rights reserved.
-
----
-
-## Built with ❤️ for Indian job seekers
-
-**Selvo - Beat the ATS. Get the Interview.**
+**VELSEAI — Beat the ATS. Get the Interview. In Any Language.**

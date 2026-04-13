@@ -25,7 +25,7 @@
   },
   "hero": {
     "headline": "Battez l'ATS. Décrochez l'Emploi de vos Rêves.",
-    "subheadline": "75% des CV sont rejetés avant qu'un humain ne les lise. L'IA de Selvo crée des CV ATS-parfaits qui vous décrochent des entretiens.",
+    "subheadline": "75% des CV sont rejetés avant qu'un humain ne les lise. L'IA de VELSEAI crée des CV ATS-parfaits qui vous décrochent des entretiens.",
     "ctaPrimary": "Vérifiez votre Score ATS — Gratuitement",
     "ctaSecondary": "Créer mon CV",
     "socialProof": "Utilisé par {count}+ chercheurs d'emploi"
@@ -137,7 +137,7 @@
   },
   "auth": {
     "loginTitle": "Bon retour",
-    "loginSubtitle": "Connectez-vous à votre compte Selvo",
+    "loginSubtitle": "Connectez-vous à votre compte VELSEAI",
     "signupTitle": "Créez votre compte",
     "signupSubtitle": "Rejoignez {count}+ chercheurs d'emploi qui battent les filtres ATS",
     "emailLabel": "Adresse e-mail",
@@ -168,11 +168,11 @@
     "rateLimited": "Trop de demandes. Veuillez patienter un moment."
   },
   "seo": {
-    "homeTitle": "Selvo — Vérificateur ATS Gratuit et Créateur de CV IA",
+    "homeTitle": "VELSEAI — Vérificateur ATS Gratuit et Créateur de CV IA",
     "homeDescription": "Vérifiez si votre CV passe les filtres ATS instantanément — pas d'inscription nécessaire. Créez des CV optimisés pour l'ATS avec l'IA. Utilisé par {count}+ chercheurs d'emploi.",
-    "atsCheckerTitle": "Vérificateur de Score ATS Gratuit — Pas d'Inscription | Selvo",
+    "atsCheckerTitle": "Vérificateur de Score ATS Gratuit — Pas d'Inscription | VELSEAI",
     "atsCheckerDescription": "Collez votre CV et la description du poste. Obtenez votre score ATS en 10 secondes. Voyez exactement quels mots-clés manquent. 100% gratuit, pas de compte requis.",
-    "pricingTitle": "Tarifs — Créateur de CV IA Selvo",
-    "pricingDescription": "Les plans Selvo commencent à {price}. Inclut vérifications ATS illimitées, créateur de CV IA, modèles, suivi des candidatures et générateur de lettres."
+    "pricingTitle": "Tarifs — Créateur de CV IA VELSEAI",
+    "pricingDescription": "Les plans VELSEAI commencent à {price}. Inclut vérifications ATS illimitées, créateur de CV IA, modèles, suivi des candidatures et générateur de lettres."
   }
 }

@@ -25,7 +25,7 @@
   },
   "hero": {
     "headline": "Überwinden Sie das ATS. Landen Sie Ihren Traumjob.",
-    "subheadline": "75% der Lebensläufe werden abgelehnt, bevor ein Mensch sie liest. Selvos KI erstellt ATS-perfekte Lebensläufe, die Ihnen Vorstellungsgespräche verschaffen.",
+    "subheadline": "75% der Lebensläufe werden abgelehnt, bevor ein Mensch sie liest. VELSEAIs KI erstellt ATS-perfekte Lebensläufe, die Ihnen Vorstellungsgespräche verschaffen.",
     "ctaPrimary": "Ihren ATS-Score prüfen — Kostenlos",
     "ctaSecondary": "Meinen Lebenslauf erstellen",
     "socialProof": "Vertraut von {count}+ Arbeitssuchenden"
@@ -137,7 +137,7 @@
   },
   "auth": {
     "loginTitle": "Willkommen zurück",
-    "loginSubtitle": "Melden Sie sich bei Ihrem Selvo-Konto an",
+    "loginSubtitle": "Melden Sie sich bei Ihrem VELSEAI-Konto an",
     "signupTitle": "Konto erstellen",
     "signupSubtitle": "Schließen Sie sich {count}+ Arbeitssuchenden an, die ATS-Filter überwinden",
     "emailLabel": "E-Mail-Adresse",
@@ -168,11 +168,11 @@
     "rateLimited": "Zu viele Anfragen. Bitte warten Sie einen Moment."
   },
   "seo": {
-    "homeTitle": "Selvo — Kostenloser ATS-Prüfer & KI-Lebenslauf-Builder",
+    "homeTitle": "VELSEAI — Kostenloser ATS-Prüfer & KI-Lebenslauf-Builder",
     "homeDescription": "Prüfen Sie sofort, ob Ihr Lebenslauf ATS-Filter besteht — keine Anmeldung erforderlich. Erstellen Sie mit KI ATS-optimierte Lebensläufe. Verwendet von {count}+ Arbeitssuchenden.",
-    "atsCheckerTitle": "Kostenloser ATS-Score-Prüfer — Keine Anmeldung | Selvo",
+    "atsCheckerTitle": "Kostenloser ATS-Score-Prüfer — Keine Anmeldung | VELSEAI",
     "atsCheckerDescription": "Fügen Sie Ihren Lebenslauf und die Stellenbeschreibung ein. Erhalten Sie Ihren ATS-Score in 10 Sekunden. Sehen Sie genau, welche Keywords fehlen. 100% kostenlos, kein Konto erforderlich.",
-    "pricingTitle": "Preise — Selvo KI-Lebenslauf-Builder",
-    "pricingDescription": "Selvo-Pläne beginnen bei {price}. Enthält unbegrenzte ATS-Checks, KI-Lebenslauf-Builder, Vorlagen, Bewerbungsverfolgung und Anschreiben-Generator."
+    "pricingTitle": "Preise — VELSEAI KI-Lebenslauf-Builder",
+    "pricingDescription": "VELSEAI-Pläne beginnen bei {price}. Enthält unbegrenzte ATS-Checks, KI-Lebenslauf-Builder, Vorlagen, Bewerbungsverfolgung und Anschreiben-Generator."
   }
 }

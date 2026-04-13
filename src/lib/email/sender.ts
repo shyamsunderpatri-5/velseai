@@ -20,7 +20,7 @@ interface SendEmailParams {
 export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM || "VELSEAI <noreply@selvo.in>",
+      from: process.env.EMAIL_FROM || "VELSEAI <noreply@velseai.com>",
       to,
       subject,
       html,
