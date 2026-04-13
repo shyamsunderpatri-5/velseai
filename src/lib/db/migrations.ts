@@ -35,26 +35,6 @@ const MIGRATIONS = [
       CREATE INDEX IF NOT EXISTS idx_user_ip_tracking_ip ON user_ip_tracking(ip_address);
       
       ALTER TABLE user_ip_tracking ENABLE ROW LEVEL SECURITY;
-      
-      DROP POLICY IF EXISTS "Users can view own IPs" ON user_ip_tracking;
-      CREATE POLICY "Users can view own IPs" ON user_ip_tracking
-        FOR SELECT USING (auth.uid() = user_id);
-      
-      DROP POLICY IF EXISTS "Service role full access" ON user_ip_tracking;
-      CREATE POLICY "Service role full access" ON user_ip_tracking
-        FOR ALL USING (auth.role() = 'service_role');
-      
-      CREATE OR REPLACE FUNCTION check_ip_sharing(user_uuid UUID)
-      RETURNS TABLE(ip_address TEXT, first_seen TIMESTAMPTZ, times_used INT) AS $$
-      BEGIN
-        RETURN QUERY
-        SELECT uit.ip_address, uit.first_seen, COUNT(*)::INT as times_used
-        FROM user_ip_tracking uit
-        WHERE uit.user_id = user_uuid
-        GROUP BY uit.ip_address, uit.first_seen
-        ORDER BY times_used DESC;
-      END;
-      $$ LANGUAGE plpgsql SECURITY DEFINER;
     `
   },
   {
