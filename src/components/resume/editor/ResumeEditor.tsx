@@ -28,10 +28,10 @@ import {
   Share2,
   Check,
   Undo,
-  Redo,
+  Wand2,
+  Sparkles,
   FileText,
-  Settings,
-  Eye,
+  Eye
 } from "lucide-react";
 
 interface ResumeEditorProps {
@@ -160,6 +160,83 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
     }
   };
 
+  const [isFixingResume, setIsFixingResume] = React.useState(false);
+
+  const handleFixResume = async () => {
+    setIsFixingResume(true);
+    toast.loading("Fixing your resume with AI...", { id: "fix-resume" });
+    
+    try {
+      const resumeContent = content as unknown as { personal?: { title?: string }; experience?: unknown[]; skills?: unknown[]; summary?: string };
+      
+      // Step 1: Improve all bullet points
+      const bulletResponse = await fetch("/api/ai/bullet-points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          experience: resumeContent.experience || [],
+          jobTitle: resumeContent.personal?.title || "",
+        }),
+      });
+      
+      if (bulletResponse.ok) {
+        const bulletData = await bulletResponse.json();
+        if (bulletData.bulletPoints) {
+          toast.success("Improved bullet points", { id: "fix-resume" });
+        }
+      }
+
+      // Step 2: Generate better summary
+      const summaryResponse = await fetch("/api/ai/resume-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resumeText: JSON.stringify(content),
+          jobTitle: resumeContent.personal?.title || "",
+        }),
+      });
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        if (summaryData.summary) {
+          // Create updated content with new summary
+          const updatedContent = { ...content, summary: summaryData.summary };
+          setContent(updatedContent as never);
+          toast.success("Updated summary", { id: "fix-resume" });
+        }
+      }
+
+      // Step 3: Get skill suggestions
+      const skillsResponse = await fetch("/api/ai/skill-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentSkills: resumeContent.skills || [],
+          jobTitle: resumeContent.personal?.title || "",
+        }),
+      });
+
+      if (skillsResponse.ok) {
+        const skillsData = await skillsResponse.json();
+        if (skillsData.suggestedSkills) {
+          const currentSkills = content.skills || [];
+          const newSkills = [...currentSkills, ...skillsData.suggestedSkills];
+          const updatedContent = { ...content, skills: newSkills };
+          setContent(updatedContent as never);
+          toast.success("Added suggested skills", { id: "fix-resume" });
+        }
+      }
+
+      toast.success("Resume improved!", { id: "fix-resume" });
+      trackEvent("fix_resume_clicked", { success: true });
+    } catch (error) {
+      console.error("Fix resume error:", error);
+      toast.error("Failed to fix resume", { id: "fix-resume" });
+    } finally {
+      setIsFixingResume(false);
+    }
+  };
+
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col">
       {/* Top Bar */}
@@ -226,6 +303,20 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
           </Button>
           <Button variant="outline" size="icon" onClick={handleExportDOCX} title="Export as DOCX">
             <FileText className="w-4 h-4" />
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={handleFixResume} 
+            disabled={isFixingResume}
+            title="Fix my entire resume with AI"
+            className="text-violet-400 border-violet-500/50 hover:bg-violet-500/10"
+          >
+            {isFixingResume ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4 mr-2" />
+            )}
+            Fix
           </Button>
           <Button className="bg-accent hover:bg-accent/90">
             <Share2 className="w-4 h-4 mr-2" />
