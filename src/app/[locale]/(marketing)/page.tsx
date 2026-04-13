@@ -22,9 +22,9 @@ import {
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: 'VELSEAI — Free ATS Resume Checker & AI Resume Builder for India',
-  description: 'Check if your resume passes ATS filters instantly — no signup needed. Build ATS-optimized resumes with AI. Used by 10,000+ job seekers from TCS, Infosys, Google. Free to start.',
-  keywords: ['ATS resume checker', 'resume builder India', 'free ATS checker', 'Naukri resume', 'ATS score checker', 'AI resume builder India'],
+  title: 'VELSEAI — Free ATS Resume Checker & AI Resume Builder',
+  description: 'Check if your resume passes ATS filters instantly — no signup needed. Build ATS-optimized resumes with AI. Used by 10,000+ job seekers globally. Free to start.',
+  keywords: ['ATS resume checker', 'resume builder', 'free ATS checker', 'ATS score checker', 'AI resume builder'],
   openGraph: {
     title: 'VELSEAI — Beat the ATS. Get the Interview.',
     description: '75% of resumes are rejected before a human reads them. Check yours free in 10 seconds.',
@@ -196,7 +196,7 @@ export default function HomePage() {
               Everything you need to land your dream job
             </h2>
             <p className="text-white/50 max-w-2xl mx-auto">
-              Built with AI specifically for the Indian job market
+              Built with AI specifically for global job seekers
             </p>
           </div>
 
@@ -223,7 +223,7 @@ export default function HomePage() {
               {
                 icon: <FileText className="w-6 h-6" />,
                 title: "5 ATS Templates",
-                description: "Professional, ATS-friendly templates designed for Indian job markets.",
+                description: "Professional, ATS-friendly templates designed for global job markets.",
                 color: "from-blue-500 to-cyan-500"
               },
               {
@@ -306,10 +306,9 @@ export default function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-            {[
-              { 
+            {[{ 
                 name: "Free", 
-                price: "₹0", 
+                price: "$0", 
                 desc: "Perfect to get started",
                 features: ["1 resume", "3 templates", "3 ATS checks/day", "5 AI uses/day"],
                 cta: "Get Started",
@@ -317,7 +316,7 @@ export default function HomePage() {
               },
               { 
                 name: "Starter", 
-                price: "₹199", 
+                price: "$9.99", 
                 desc: "For serious job seekers",
                 features: ["5 resumes", "All templates", "Unlimited ATS", "50 AI uses/day", "Job tracker"],
                 cta: "Start Trial",
@@ -325,7 +324,7 @@ export default function HomePage() {
               },
               { 
                 name: "Pro", 
-                price: "₹499", 
+                price: "$14.99", 
                 desc: "For professionals",
                 features: ["Unlimited resumes", "Everything in Starter", "Unlimited AI", "Priority support"],
                 cta: "Go Pro",
@@ -436,7 +435,7 @@ export default function HomePage() {
               <span className="font-heading font-bold text-white">VELSEAI</span>
             </div>
             <p className="text-sm text-white/30">
-              © 2026 VELSEAI. Built for Indian job seekers.
+              © 2026 VELSEAI. Built for job seekers worldwide.
             </p>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="text-sm text-white/30 hover:text-white">Privacy</Link>

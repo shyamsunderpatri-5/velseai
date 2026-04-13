@@ -7,7 +7,6 @@ export interface Profile {
   avatarUrl: string | null;
   plan: Plan;
   planExpiresAt: string | null;
-  razorpayCustomerId: string | null;
   stripeCustomerId: string | null;
   atsChecksUsed: number;
   referralCode: string;
@@ -23,7 +22,6 @@ export interface Subscription {
   plan: string;
   amount: number;
   currency: string;
-  paymentGateway: "razorpay" | "stripe";
   gatewayPaymentId: string | null;
   gatewayOrderId: string | null;
   status: "pending" | "active" | "cancelled" | "expired" | "refunded";

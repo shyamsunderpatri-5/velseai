@@ -2,26 +2,25 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "VELSEAI - AI ATS Resume Builder for India",
+    default: "VELSEAI - AI ATS Resume Builder",
     template: "%s | VELSEAI",
   },
   description:
-    "Beat the ATS filter and land your dream job. VELSEAI's AI-powered resume builder helps Indian job seekers create ATS-optimized resumes that get interviews.",
+    "Beat the ATS filter and land your dream job. VELSEAI's AI-powered resume builder helps job seekers create ATS-optimized resumes that get interviews.",
   keywords: [
     "ATS resume checker",
-    "resume builder India",
+    "resume builder",
     "ATS optimized resume",
-    "Naukri resume format",
     "job resume builder",
     "AI resume writer",
   ],
   authors: [{ name: "VELSEAI" }],
   openGraph: {
     type: "website",
-    locale: "en_IN",
+    locale: "en_US",
     url: "https://velseai.com",
     siteName: "VELSEAI",
-    title: "VELSEAI - AI ATS Resume Builder for India",
+    title: "VELSEAI - AI ATS Resume Builder",
     description: "Beat the ATS filter and land your dream job.",
   },
   twitter: {

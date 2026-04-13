@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, X, ArrowRight, Sparkles } from "lucide-react";
-import { getPricing, getPaymentGateway } from "@/lib/i18n/getPricing";
+import { getPricing } from "@/lib/i18n/getPricing";
 import { locales, type Locale } from "@/i18n/config";
 
 interface Props {
@@ -34,7 +34,6 @@ export default async function PricingPage({ params }: Props) {
   const { locale } = await params;
   const validLocale = locales.includes(locale as Locale) ? locale as Locale : 'en';
   const pricing = getPricing(validLocale);
-  const paymentGateway = getPaymentGateway(validLocale);
   
   const plans = [
     {
@@ -159,7 +158,7 @@ export default async function PricingPage({ params }: Props) {
           
           {/* Payment Gateway Note */}
           <div className="mt-4 text-sm text-white/30">
-            {paymentGateway === 'razorpay' ? 'Payments powered by Razorpay (INR)' : 'Payments powered by Stripe'}
+            Payments powered by Stripe
           </div>
         </div>
       </section>
@@ -226,7 +225,7 @@ export default async function PricingPage({ params }: Props) {
             </div>
             <div className="p-4 bg-white/[0.02] rounded-lg">
               <h3 className="font-medium mb-2">What payment methods do you accept?</h3>
-              <p className="text-white/50 text-sm">{paymentGateway === 'razorpay' ? 'We accept all major cards via Razorpay (UPI, Cards, NetBanking)' : 'We accept all major credit/debit cards'}</p>
+              <p className="text-white/50 text-sm">We accept all major credit/debit cards</p>
             </div>
             <div className="p-4 bg-white/[0.02] rounded-lg">
               <h3 className="font-medium mb-2">Is there a free trial?</h3>

@@ -242,7 +242,7 @@ export default function SettingsPage() {
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">₹{(sub.amount / 100).toFixed(0)}</p>
+                        <p className="font-medium">${(sub.amount / 100).toFixed(0)}</p>
                         <Badge variant={sub.status === "active" ? "success" : "secondary"} className="text-xs">
                           {sub.status}
                         </Badge>

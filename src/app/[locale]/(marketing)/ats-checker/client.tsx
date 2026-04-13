@@ -381,7 +381,7 @@ export function ATSCheckerClient() {
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2026 VELSEAI. Built for Indian job seekers.
+              © 2026 VELSEAI. Built for job seekers worldwide.
             </p>
             <div className="flex items-center gap-4">
               <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">

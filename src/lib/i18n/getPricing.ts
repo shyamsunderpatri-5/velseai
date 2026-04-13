@@ -23,7 +23,3 @@ export function getPricing(locale: Locale) {
     }
   };
 }
-
-export function getPaymentGateway(locale: Locale): 'razorpay' | 'stripe' {
-  return locale === 'hi' ? 'razorpay' : 'stripe';
-}

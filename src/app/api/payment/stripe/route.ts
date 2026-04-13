@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 
 const checkoutSchema = z.object({
   planId: z.enum(["starter_monthly", "starter_yearly", "pro_monthly", "pro_yearly", "lifetime"]),
-  currency: z.enum(["USD", "INR"]).default("USD"),
+  currency: z.enum(["USD", "EUR", "GBP", "BRL"]).default("USD"),
 });
 
 export async function POST(request: NextRequest) {

@@ -164,7 +164,7 @@ export function ATSCheckerForm({
           Job Description <span className="text-destructive">*</span>
         </label>
         <Textarea
-          placeholder="Paste the job description here...&#10;&#10;Tip: Copy directly from Naukri, LinkedIn, or Indeed job postings for best results."
+          placeholder="Paste the job description here...&#10;&#10;Tip: Copy directly from LinkedIn, Indeed, or Glassdoor job postings for best results."
           value={jobDescription}
           onChange={(e) => {
             setJobDescription(e.target.value);

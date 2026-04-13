@@ -30,7 +30,7 @@ export const localeCurrencies: Record<Locale, { code: string; symbol: string; st
   ar: { code: 'USD', symbol: '$',   starterMonthly: 7.99,  proMonthly: 14.99,  lifetime: 79   },
   fr: { code: 'EUR', symbol: '€',   starterMonthly: 4.99,  proMonthly: 9.99,   lifetime: 49   },
   de: { code: 'EUR', symbol: '€',   starterMonthly: 5.99,  proMonthly: 11.99,  lifetime: 59   },
-  hi: { code: 'INR', symbol: '₹',   starterMonthly: 199,   proMonthly: 499,    lifetime: 2999 }
+  hi: { code: 'USD', symbol: '$',   starterMonthly: 4.99,  proMonthly: 9.99,   lifetime: 49   }
 };
 
 export const localeCountryMap: Record<string, Locale> = {
@@ -40,5 +40,5 @@ export const localeCountryMap: Record<string, Locale> = {
   AE: 'ar', SA: 'ar', EG: 'ar', KW: 'ar', QA: 'ar', BH: 'ar',
   FR: 'fr', SN: 'fr', CI: 'fr', CM: 'fr',
   DE: 'de', AT: 'de', CH: 'de',
-  IN: 'hi', PK: 'en', BD: 'en'
+  IN: 'en', PK: 'en', BD: 'en'
 };

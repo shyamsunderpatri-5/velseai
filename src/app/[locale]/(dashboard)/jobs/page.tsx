@@ -152,7 +152,7 @@ export default async function JobsPage() {
                           {job.salaryMin && job.salaryMax && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
                               <DollarSign className="w-3 h-3" />
-                              ₹{(job.salaryMin / 100000).toFixed(1)}L - ₹{(job.salaryMax / 100000).toFixed(1)}L
+                              ${(job.salaryMin / 1000).toFixed(0)}k - ${(job.salaryMax / 1000).toFixed(0)}k
                             </div>
                           )}
                           {job.atsScore && (

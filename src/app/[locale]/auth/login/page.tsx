@@ -36,7 +36,7 @@ export default function LoginPage({
       {/* Footer */}
       <footer className="border-t border-white/5 py-6">
         <p className="text-center text-sm text-white/30">
-          © 2026 VELSEAI. Built for Indian job seekers.
+          © 2026 VELSEAI. Built for job seekers worldwide.
         </p>
       </footer>
     </div>
