@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Selvo",
+    "appName": "VELSEAI",
     "tagline": "Beat the ATS. Get the Interview.",
     "loading": "Loading...",
     "save": "Save",
@@ -25,7 +25,7 @@
   },
   "hero": {
     "headline": "Beat the ATS. Land Your Dream Job.",
-    "subheadline": "75% of resumes are rejected before a human reads them. Selvo's AI builds ATS-perfect resumes that get you interviews.",
+    "subheadline": "75% of resumes are rejected before a human reads them. VELSEAI's AI builds ATS-perfect resumes that get you interviews.",
     "ctaPrimary": "Check Your ATS Score — Free",
     "ctaSecondary": "Build My Resume",
     "socialProof": "Trusted by {count}+ job seekers"
@@ -37,7 +37,7 @@
     "tabUploadFile": "Upload PDF/DOCX",
     "resumePlaceholder": "Paste your resume text here...",
     "jobDescLabel": "Job Description",
-    "jobDescPlaceholder": "Paste the job description from LinkedIn / Indeed / Naukri...",
+    "jobDescPlaceholder": "Paste the job description from LinkedIn / Indeed / Glassdoor...",
     "companyLabel": "Company Name (optional)",
     "jobTitleLabel": "Job Title (optional)",
     "checkButton": "Check ATS Score →",
@@ -137,7 +137,7 @@
   },
   "auth": {
     "loginTitle": "Welcome back",
-    "loginSubtitle": "Sign in to your Selvo account",
+    "loginSubtitle": "Sign in to your VELSEAI account",
     "signupTitle": "Create your account",
     "signupSubtitle": "Join {count}+ job seekers beating ATS filters",
     "emailLabel": "Email address",
@@ -168,11 +168,11 @@
     "rateLimited": "Too many requests. Please wait a moment."
   },
   "seo": {
-    "homeTitle": "Selvo — Free ATS Resume Checker & AI Resume Builder",
+    "homeTitle": "VELSEAI — Free ATS Resume Checker & AI Resume Builder",
     "homeDescription": "Check if your resume passes ATS filters instantly — no signup needed. Build ATS-optimized resumes with AI. Used by {count}+ job seekers worldwide.",
-    "atsCheckerTitle": "Free ATS Score Checker — No Signup Needed | Selvo",
+    "atsCheckerTitle": "Free ATS Score Checker — No Signup Needed | VELSEAI",
     "atsCheckerDescription": "Paste your resume and job description. Get your ATS score in 10 seconds. See exactly which keywords are missing. 100% free, no account required.",
-    "pricingTitle": "Pricing — Selvo AI Resume Builder",
-    "pricingDescription": "Selvo plans start at {price}. Includes unlimited ATS checks, AI resume builder, templates, job tracker, and cover letter generator."
+    "pricingTitle": "Pricing — VELSEAI AI Resume Builder",
+    "pricingDescription": "VELSEAI plans start at {price}. Includes unlimited ATS checks, AI resume builder, templates, job tracker, and cover letter generator."
   }
 }
