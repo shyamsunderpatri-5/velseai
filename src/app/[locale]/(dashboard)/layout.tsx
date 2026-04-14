@@ -39,14 +39,14 @@ export default async function DashboardLayout({
     .single();
 
   return (
-    <div className="min-h-screen bg-muted/20">
+    <div className="min-h-screen bg-[#0F0F1A]">
       {/* Top Navigation */}
       <Navbar user={user} profile={profile} isDashboard={true} />
 
-      <div className="container py-6">
-        <div className="grid lg:grid-cols-[240px_1fr] gap-6">
+      <div className="container py-8">
+        <div className="flex gap-8">
           <Sidebar user={user} profile={profile} />
-          <main>{children}</main>
+          <main className="flex-1 min-w-0">{children}</main>
         </div>
       </div>
     </div>

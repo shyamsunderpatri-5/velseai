@@ -1,62 +1,41 @@
-@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  --navy: #1A1A2E;
-  --accent: #E94560;
-  --success: #0F9B58;
+  --navy: #0F0F1A;
+  --purple: #7C3AED;
+  --purple-light: #A78BFA;
+  --purple-dark: #5B21B6;
+  --success: #10B981;
   --warning: #F59E0B;
   --muted: #6B7280;
-  --font-heading: 'Bricolage Grotesque', sans-serif;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   
-  --background: #ffffff;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --popover: #ffffff;
-  --popover-foreground: #171717;
-  --primary: #1A1A2E;
-  --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #171717;
-  --muted-foreground: #6b7280;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #e5e5e5;
-  --input: #e5e5e5;
-  --ring: #1A1A2E;
-  --radius: 0.5rem;
-  --chart-1: #1A1A2E;
-  --chart-2: #E94560;
-  --chart-3: #0F9B58;
-  --chart-4: #F59E0B;
-  --chart-5: #3b82f6;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #1a1a1a;
-    --card-foreground: #ededed;
-    --popover: #1a1a1a;
-    --popover-foreground: #ededed;
-    --primary: #E94560;
-    --primary-foreground: #ffffff;
-    --secondary: #262626;
-    --secondary-foreground: #ededed;
-    --muted-foreground: #a3a3a3;
-    --accent: #E94560;
-    --accent-foreground: #ffffff;
-    --destructive: #7f1d1d;
-    --destructive-foreground: #ededed;
-    --border: #262626;
-    --input: #262626;
-    --ring: #E94560;
-  }
+  --background: #0F0F1A;
+  --foreground: #FAFAFA;
+  --card: #18181B;
+  --card-foreground: #FAFAFA;
+  --popover: #18181B;
+  --popover-foreground: #FAFAFA;
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary: #27272A;
+  --secondary-foreground: #FAFAFA;
+  --muted-foreground: #A1A1AA;
+  --accent-foreground: #FFFFFF;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #3F3F46;
+  --input: #3F3F46;
+  --ring: #7C3AED;
+  --radius: 0.75rem;
+  --chart-1: #7C3AED;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #3B82F6;
+  --chart-5: #EC4899;
 }
 
 @theme inline {
@@ -79,11 +58,12 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-navy: var(--navy);
-  --color-navy-foreground: #ffffff;
-  --color-accent-red: var(--accent);
-  --color-accent-red-foreground: #ffffff;
+  --color-navy-foreground: #FFFFFF;
+  --color-purple: var(--purple);
+  --color-purple-light: var(--purple-light);
+  --color-purple-foreground: #FFFFFF;
   --color-success: var(--success);
-  --color-success-foreground: #ffffff;
+  --color-success-foreground: #FFFFFF;
   --color-warning: var(--warning);
   --color-warning-foreground: #000000;
   --radius-sm: calc(var(--radius) - 4px);
@@ -98,10 +78,13 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  font-weight: 600;
 }
 
 .font-heading {
@@ -120,12 +103,12 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--navy);
 }
 
-.text-accent {
-  color: var(--accent);
+.text-purple {
+  color: var(--purple);
 }
 
-.bg-accent {
-  background-color: var(--accent);
+.bg-purple {
+  background-color: var(--purple);
 }
 
 .text-success {
@@ -136,19 +119,21 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--success);
 }
 
-@keyframes pulse-glow {
+/* Rezi-style glow effects */
+@keyframes purple-glow {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4);
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 20px rgba(233, 69, 96, 0);
+    box-shadow: 0 0 40px rgba(124, 58, 237, 0.6);
   }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 2s infinite;
+.animate-purple-glow {
+  animation: purple-glow 2s ease-in-out infinite;
 }
 
+/* Floating animation */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px);
@@ -162,26 +147,54 @@ h1, h2, h3, h4, h5, h6 {
   animation: float 3s ease-in-out infinite;
 }
 
-@keyframes gradient {
+/* Gradient text */
+.bg-gradient-purple {
+  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.15);
+}
+
+/* Button shine effect */
+@keyframes shine {
   0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
+    transform: translateX(-100%);
   }
   100% {
-    background-position: 0% 50%;
+    transform: translateX(100%);
   }
 }
 
-.animate-gradient {
-  background-size: 200% 200%;
-  animation: gradient 3s ease infinite;
+.btn-shine:hover::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: shine 0.6s ease-out;
 }
 
+/* Scrollbar styling */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -190,9 +203,15 @@ h1, h2, h3, h4, h5, h6 {
 
 ::-webkit-scrollbar-thumb {
   background: var(--muted-foreground);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--foreground);
+  background: var(--primary);
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4);
 }

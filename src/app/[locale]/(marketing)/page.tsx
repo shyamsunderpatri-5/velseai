@@ -44,8 +44,8 @@ export default function HomePage() {
       <header className="fixed top-0 w-full z-50 bg-[#0D0D12]/80 backdrop-blur-xl border-b border-white/5">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+              <span className="text-white font-bold text-lg">V</span>
             </div>
             <span className="font-heading font-bold text-xl text-white">VELSEAI</span>
           </Link>
