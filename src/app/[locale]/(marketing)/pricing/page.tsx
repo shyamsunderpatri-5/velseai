@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles } from "lucide-react";

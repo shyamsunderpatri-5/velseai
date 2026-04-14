@@ -10,7 +10,13 @@ function generateChecksum(sql: string): string {
   return Math.abs(hash).toString(16);
 }
 
-const MIGRATIONS = [
+interface Migration {
+  id: string;
+  sql: string;
+  checksum?: string;
+}
+
+const MIGRATIONS: Migration[] = [
   {
     id: "001_initial_schema",
     sql: `

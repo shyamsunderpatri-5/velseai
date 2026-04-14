@@ -16,12 +16,15 @@ import {
   Loader2,
   CheckCircle2,
   MessageSquare,
-  Send
+  Send,
+  ChevronRight,
+  X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "react-hot-toast";

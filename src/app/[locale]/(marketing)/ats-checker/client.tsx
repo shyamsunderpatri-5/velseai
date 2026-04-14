@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +21,9 @@ import {
   Shield,
   MessageCircle,
   ChevronDown,
+  Sparkles,
+  FileText,
+  FileSearch,
 } from "lucide-react";
 
 interface ATSResult {
@@ -377,4 +381,5 @@ const faqs = [
   {
     q: "What score do I need to pass?",
     a: "A score of 75+ is generally considered passing. Scores above 85 significantly increase your chances of getting an interview.",
+  }
 ];

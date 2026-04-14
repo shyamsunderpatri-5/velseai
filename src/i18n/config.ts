@@ -42,13 +42,3 @@ export const localeCountryMap: Record<string, Locale> = {
   DE: 'de', AT: 'de', CH: 'de',
   PK: 'en', BD: 'en', IN: 'hi'
 };
-
-export const localeCountryMap: Record<string, Locale> = {
-  US: 'en', GB: 'en', AU: 'en', CA: 'en', NZ: 'en',
-  MX: 'es', CO: 'es', AR: 'es', CL: 'es', PE: 'es', ES: 'es',
-  BR: 'pt',
-  AE: 'ar', SA: 'ar', EG: 'ar', KW: 'ar', QA: 'ar', BH: 'ar',
-  FR: 'fr', SN: 'fr', CI: 'fr', CM: 'fr',
-  DE: 'de', AT: 'de', CH: 'de',
-  PK: 'en', BD: 'en'
-};

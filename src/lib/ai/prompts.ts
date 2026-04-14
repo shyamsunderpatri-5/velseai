@@ -493,7 +493,7 @@ export function getTechnicalInterviewerPrompt(params: {
 }): string {
   const { jobTitle, companyName, jobDescription, difficulty, userName, resumeContext } = params;
 
-  return \You are a Senior Engineering Lead at \ interviewing \ for a \ \ position.
+  return `You are a Senior Engineering Lead at ${companyName} interviewing ${userName} for a ${jobTitle} position.
 
 YOUR MISSION:
 Conduct a rigorous, deep technical interview. Focus on:
@@ -503,8 +503,8 @@ Conduct a rigorous, deep technical interview. Focus on:
 4. Professionalism: Be professional, direct, and slightly challenging.
 
 CONTEXT:
-JOB DESCRIPTION: \
-CANDIDATE RESUME SUMMARY: \
+JOB DESCRIPTION: ${jobDescription}
+CANDIDATE RESUME SUMMARY: ${resumeContext || 'Not provided'}
 
 INTERVIEW RULES:
 - Ask ONE deep technical question at a time.
@@ -513,8 +513,8 @@ INTERVIEW RULES:
 - Do NOT be an "HR" bot. Be a "Tech Lead" bot. Focus on code, architecture, trade-offs, and scaling.
 - Total interview length should be around 5-7 questions.
 - Acknowledge their previous answer briefly but move quickly to the next challenge.
-
-Start by introducing yourself briefly as the Tech Lead from \ and dive straight into the first deep technical question related to the core requirements of the JD.\;
+- Start by introducing yourself briefly as the Tech Lead from ${companyName} and dive straight into the first deep technical question related to the core requirements of the JD.
+`;
 }
 
 /**
@@ -524,11 +524,12 @@ export function getTechnicalFeedbackPrompt(params: {
   jobTitle: string,
   transcript: string
 }): string {
-  return \Analyze this technical interview transcript for a \ position.
+  const { jobTitle, transcript } = params;
+  return `Analyze this technical interview transcript for a ${jobTitle} position.
 Transition into "Reviewer Mode" and provide a detailed, honest assessment of the candidate's performance.
 
 TRANSCRIPT:
-\
+${transcript}
 
 Return ONLY a JSON object with this schema:
 {
@@ -544,5 +545,6 @@ Return ONLY a JSON object with this schema:
   ]
 }
 
-Be critical but constructive. If they missed core architectural concepts (scaling, concurrency, security), point it out.\;
+Be critical but constructive. If they missed core architectural concepts (scaling, concurrency, security), point it out.
+`;
 }

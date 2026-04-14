@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +18,7 @@ import { CertificationsSection } from "./CertificationsSection";
 import { ResumePreview } from "../preview/ResumePreview";
 import { createClient } from "@/lib/supabase/client";
 import { useResumeStore } from "@/stores/resumeStore";
+import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics/posthog";
 import { DEFAULT_RESUME_SETTINGS } from "@/types/resume";
 import toast from "react-hot-toast";

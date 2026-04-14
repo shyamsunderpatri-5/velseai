@@ -1,8 +1,17 @@
 import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 
-export async function generateMetadata({ params }: { params: { username: string, locale: string } }): Promise<Metadata> {
-  const { username, locale } = params;
+interface Props {
+  children: React.ReactNode;
+  params: Promise<{ username: string; locale: string }>;
+}
+
+export default async function UserProfileLayout({ children }: Props) {
+  return <>{children}</>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username, locale } = await params;
   
   const supabase = await createClient();
   const { data: profile } = await supabase
