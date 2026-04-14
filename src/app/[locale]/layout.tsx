@@ -18,16 +18,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'seo' });
   return {
-title: { template: `%s | VELSEAI`, default: t('homeTitle') },
-      description: t('homeDescription'),
-      alternates: {
-        canonical: `https://velseai.com/${locale}`,
-        languages: Object.fromEntries(
-          locales.map((l) => [l, `https://velseai.com/${l}`])
-        )
-      },
-      openGraph: {
-        siteName: 'VELSEAI',
+    title: { template: `%s | VELSEAI`, default: t('homeTitle') },
+    description: t('homeDescription'),
+    alternates: {
+      canonical: `https://velseai.com/${locale}`,
+      languages: Object.fromEntries(
+        locales.map((l) => [l, `https://velseai.com/${l}`])
+      )
+    },
+    openGraph: {
+      siteName: 'VELSEAI',
       type: 'website'
     }
   };
@@ -41,8 +41,12 @@ export default async function LocaleLayout({ children, params }: Props) {
   const isRTL = rtlLocales.includes(locale as Locale);
 
   return (
-    <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'}>
-      <body>
+    <html lang={locale} dir={isRTL ? 'rtl' : 'ltr'} className="h-full antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
+      <body className="min-h-full flex flex-col">
         <NextIntlClientProvider messages={messages}>
           {children}
         </NextIntlClientProvider>

@@ -41,62 +41,7 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-muted/20">
       {/* Top Navigation */}
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-navy flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <span className="font-heading font-bold text-xl">VELSEAI</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-4">
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium hover:text-primary"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/ats-checker"
-                className="text-sm font-medium hover:text-primary"
-              >
-                ATS Checker
-              </Link>
-            </nav>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <LanguageSwitcher />
-            {profile?.plan !== "pro" && profile?.plan !== "lifetime" && (
-              <Link href="/pricing">
-                <Button size="sm" className="bg-accent hover:bg-accent/90">
-                  <Star className="w-4 h-4 mr-1" />
-                  Upgrade
-                </Button>
-              </Link>
-            )}
-            <Badge
-              variant={profile?.plan === "free" ? "secondary" : "success"}
-              className="hidden sm:inline-flex"
-            >
-              {profile?.plan === "free"
-                ? "Free"
-                : profile?.plan === "starter"
-                ? "Starter"
-                : profile?.plan === "pro"
-                ? "Pro"
-                : "Lifetime"}
-            </Badge>
-            <form action="/auth/signout" method="post">
-              <Button variant="ghost" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </Button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <Navbar user={user} profile={profile} isDashboard={true} />
 
       <div className="container py-6">
         <div className="grid lg:grid-cols-[240px_1fr] gap-6">

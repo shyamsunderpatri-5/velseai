@@ -34,10 +34,32 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MarketingLayout({
+import { createClient } from "@/lib/supabase/server";
+import { Navbar } from "@/components/layout/Navbar";
+
+export default async function MarketingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  let profile = null;
+  if (user) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      <Navbar user={user} profile={profile} isDashboard={false} />
+      <main className="flex-1">{children}</main>
+    </div>
+  );
 }
+

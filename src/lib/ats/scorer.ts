@@ -452,7 +452,7 @@ const HARD_SKILLS = [
   "prisma", "sequelize", "typeorm", "nginx", "apache", "tomcat", "jenkins", "circleci",
   "github actions", "bitbucket", "jira", "confluence", "salesforce", "sap", "oracle",
   "salesforce crm", "hubspot", "marketing cloud", "seo", "sem", "google ads", "facebook ads",
-  "analytics", "google analytics", "firebase", "supabase", "firebase", "stripe", "razorpay",
+  "analytics", "google analytics", "firebase", "supabase", "stripe",
   "payment gateway", "blockchain", "solidity", "web3", "ethereum", "smart contracts",
   "networking", "tcp/ip", "dns", "vpn", "firewall", "security", "cybersecurity",
   "penetration testing", "ethical hacking", "iso 27001", "soc2", "gdpr", "data privacy",

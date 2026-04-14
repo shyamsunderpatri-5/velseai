@@ -43,6 +43,320 @@ interface ATSResult {
   processingTime: number;
 }
 
+
+export function ATSCheckerClient() {
+  const t = useTranslations("atsChecker");
+  const locale = useLocale();
+  const [result, setResult] = React.useState<ATSResult | null>(null);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSubmit = async (data: {
+    resumeText?: string;
+    resumeFile?: string;
+    jobDescription: string;
+    companyName?: string;
+    jobTitle?: string;
+  }) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/ats-score", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-session-id": crypto.randomUUID(),
+        },
+        body: JSON.stringify(data),
+      });
+
+      const responseData = await response.json();
+
+      if (!response.ok) {
+        throw new Error(responseData.message || responseData.error || t("errorFailed"));
+      }
+
+      setResult(responseData);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <div className="min-h-screen bg-[#0D0D12] text-white">
+      {/* Hero */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(124,58,237,0.1)_0%,transparent_70%)] pointer-events-none" />
+        <div className="container relative z-10 px-4 md:px-6">
+          <div className="text-center mb-16 space-y-6">
+            <Badge className="bg-violet-500/10 text-violet-400 border-violet-500/20 px-4 py-1.5 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-1000">
+              <Sparkles className="w-3.5 h-3.5 mr-2" />
+              {t("badge")}
+            </Badge>
+            <h1 className="font-heading text-4xl md:text-6xl font-black tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-white/50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+              {t("titleStart")}{" "}
+              <span className="text-violet-500">{t("titleAccent")}</span>
+            </h1>
+            <p className="text-white/50 text-xl max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-400">
+              {t("subtitle")}
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 pt-8 animate-in fade-in duration-1000 delay-700">
+              <div className="flex items-center gap-2.5 group">
+                <div className="w-9 h-9 rounded-full bg-success/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Users className="w-4 h-4 text-success" />
+                </div>
+                <span className="text-sm font-medium text-white/70">{t("socialProof")}</span>
+              </div>
+              <div className="flex items-center gap-2.5 group">
+                <div className="w-9 h-9 rounded-full bg-warning/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Zap className="w-4 h-4 text-warning" />
+                </div>
+                <span className="text-sm font-medium text-white/70">{t("socialProofTime")}</span>
+              </div>
+              <div className="flex items-center gap-2.5 group">
+                <div className="w-9 h-9 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Shield className="w-4 h-4 text-blue-500" />
+                </div>
+                <span className="text-sm font-medium text-white/70">{t("socialProofFree")}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-10 max-w-7xl mx-auto">
+            {/* Input Form */}
+            <Card className="bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+              <CardHeader className="pb-4">
+                <CardTitle className="font-heading text-2xl font-bold flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-violet-500" />
+                  </div>
+                  {result ? t("formTitleAgain") : t("formTitle")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ATSCheckerForm
+                  onSubmit={handleSubmit}
+                  isLoading={isLoading}
+                  error={error}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Results */}
+            <Card className={cn(
+              "bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl transition-all duration-700 overflow-hidden",
+              !result && "opacity-50 grayscale select-none pointer-events-none"
+            )}>
+              <CardHeader className="pb-2">
+                <CardTitle className="font-heading text-2xl font-bold flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-violet-500/10 flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-violet-500" />
+                  </div>
+                  {result ? t("resultTitle") : t("resultTitlePlaceholder")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {result ? (
+                  <div className="space-y-8 animate-in fade-in slide-in-from-right-8 duration-700">
+                    {/* Score Gauge */}
+                    <div className="flex flex-col items-center py-6 bg-white/[0.02] rounded-3xl border border-white/5 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-violet-500/5 to-transparent pointer-events-none" />
+                      <ScoreGauge score={result.overall_score} size="lg" />
+                      <div className="text-center mt-6 space-y-1">
+                        <p className="text-2xl font-bold text-white">
+                          {result.overall_score >= 85 ? t("scoreExcellent") : result.overall_score >= 70 ? t("scoreGood") : t("scoreFair")}
+                        </p>
+                        <p className="text-sm text-white/40 uppercase tracking-widest font-semibold">
+                          {t("processingTime")}: {result.processingTime}ms
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Sub Scores */}
+                    <ATSScoreCard
+                      score={result.overall_score}
+                      subScores={[
+                        {
+                          label: t("keywordScore"),
+                          value: result.keyword_score,
+                          icon: <Zap className="w-4 h-4" />,
+                        },
+                        {
+                          label: t("formatScore"),
+                          value: result.format_score,
+                          icon: <Shield className="w-4 h-4" />,
+                        },
+                        {
+                          label: t("skillsScore"),
+                          value: result.skills_score,
+                          icon: <CheckCircle2 className="w-4 h-4" />,
+                        },
+                        {
+                          label: t("experienceScore"),
+                          value: result.experience_score,
+                          icon: <Users className="w-4 h-4" />,
+                        },
+                      ]}
+                    />
+
+                    {/* Keywords */}
+                    <KeywordAnalysis
+                      matchedKeywords={result.matched_keywords}
+                      missingKeywords={result.missing_keywords}
+                      hardSkillsMatched={result.hard_skills_matched}
+                      hardSkillsMissing={result.hard_skills_missing}
+                    />
+
+                    {/* Suggestions */}
+                    {result.suggestions.high_priority.length > 0 && (
+                      <div className="space-y-4 p-5 rounded-2xl bg-warning/5 border border-warning/10">
+                        <h4 className="font-bold flex items-center gap-2.5 text-warning">
+                          <Lightbulb className="w-5 h-5" />
+                          {t("topFixes")}
+                        </h4>
+                        <ul className="space-y-3">
+                          {result.suggestions.high_priority.map((suggestion, i) => (
+                            <li key={i} className="flex items-start gap-3 text-sm text-white/80">
+                              <div className="mt-1 w-1.5 h-1.5 rounded-full bg-warning flex-shrink-0" />
+                              <span>{suggestion}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <div className="pt-6 space-y-4">
+                      <Link href="/auth/signup">
+                        <Button className="w-full h-12 bg-violet-600 hover:bg-violet-700 text-white font-bold text-lg shadow-xl shadow-violet-600/20 group">
+                          {t("upgradePrompt")}
+                          <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                      
+                      {/* WhatsApp Share */}
+                      <div className="pt-4 space-y-3">
+                        <p className="text-sm text-white/40 text-center font-medium">
+                          {t("shareTitle")}
+                        </p>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(
+                            t("whatsappMessage", {
+                              score: result.overall_score,
+                              url: `https://velseai.com/${locale}/ats-checker`
+                            })
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2.5 w-full h-11 bg-[#25D366] hover:bg-[#20BD5C] text-white rounded-xl font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                          <MessageCircle className="w-5 h-5" />
+                          {t("shareWhatsApp")}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
+                    <div className="w-24 h-24 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center relative">
+                      <div className="absolute inset-0 bg-violet-500/20 blur-2xl rounded-full" />
+                      <FileSearch className="w-12 h-12 text-white/20 relative z-10" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="font-heading font-bold text-xl text-white">
+                        {t("placeholderTitle")}
+                      </h3>
+                      <p className="text-white/40 max-w-xs mx-auto text-sm leading-relaxed">
+                        {t("placeholderDesc")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-24 relative">
+        <div className="container px-4">
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+            <h2 className="font-heading text-3xl md:text-4xl font-bold">
+              {t("howItWorksTitle")}
+            </h2>
+            <p className="text-white/40">
+              {t("howItWorksDesc")}
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {[
+              { step: 1, title: t("step1Title"), desc: t("step1Desc") },
+              { step: 2, title: t("step2Title"), desc: t("step2Desc") },
+              { step: 3, title: t("step3Title"), desc: t("step3Desc") },
+            ].map((item) => (
+              <div key={item.step} className="p-8 rounded-3xl bg-white/[0.02] border border-white/5 relative group hover:bg-white/[0.04] transition-colors">
+                <div className="w-12 h-12 rounded-2xl bg-violet-500 text-white font-black text-xl flex items-center justify-center mb-6 shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform">
+                  {item.step}
+                </div>
+                <h3 className="font-heading font-bold text-xl mb-3 text-white">{item.title}</h3>
+                <p className="text-sm text-white/50 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24 border-t border-white/5 bg-white/[0.01]">
+        <div className="container px-4">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="font-heading text-3xl font-bold">{t("faqTitle")}</h2>
+          </div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqs.map((faq, i) => (
+              <details key={i} className="group bg-white/[0.02] border border-white/5 rounded-2xl transition-all">
+                <summary className="flex items-center justify-between p-6 cursor-pointer font-bold text-white/80 group-hover:text-white transition-colors">
+                  {faq.q}
+                  <ChevronDown className="w-5 h-5 transition-transform group-open:rotate-180 text-white/30" />
+                </summary>
+                <div className="px-6 pb-6 text-white/50 text-sm leading-relaxed">
+                  {faq.a}
+                </div>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-white/5 py-12">
+        <div className="container px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <p className="text-sm text-white/30 font-medium">
+              © {currentYear} VELSEAI. {t("footerText")}
+            </p>
+            <div className="flex items-center gap-8">
+              <Link href="/privacy" className="text-sm text-white/30 hover:text-violet-400 transition-colors font-medium">
+                {t("privacy")}
+              </Link>
+              <Link href="/terms" className="text-sm text-white/30 hover:text-violet-400 transition-colors font-medium">
+                {t("terms")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
 const faqs = [
   {
     q: "What is ATS?",
@@ -63,337 +377,4 @@ const faqs = [
   {
     q: "What score do I need to pass?",
     a: "A score of 75+ is generally considered passing. Scores above 85 significantly increase your chances of getting an interview.",
-  },
 ];
-
-export function ATSCheckerClient() {
-  const [result, setResult] = React.useState<ATSResult | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const handleSubmit = async (data: {
-    resumeText?: string;
-    resumeFile?: string;
-    jobDescription: string;
-    companyName?: string;
-    jobTitle?: string;
-  }) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch("/api/ats-score", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || "Failed to analyze resume");
-      }
-
-      setResult(responseData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-[#0D0D12]">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#0D0D12]/80 backdrop-blur-xl border-b border-white/5">
-        <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            <span className="font-heading font-bold text-xl text-white">VELSEAI</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link href="/ats-checker" className="text-sm font-medium text-white">
-              ATS Checker
-            </Link>
-            <Link href="/pricing" className="text-sm font-medium text-white/70 hover:text-white">
-              Pricing
-            </Link>
-            <Link href="/auth/login">
-              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white hover:bg-white/10">
-                Log in
-              </Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button size="sm" className="bg-violet-600 hover:bg-violet-700">
-                Get Started Free
-              </Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero */}
-      <section className="py-12 md:py-16">
-        <div className="container px-4 md:px-6">
-          <div className="text-center mb-10">
-            <h1 className="font-heading text-3xl md:text-5xl font-bold mb-4">
-              Is Your Resume{" "}
-              <span className="text-accent">Passing the ATS Filter?</span>
-            </h1>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              75% of resumes are auto-rejected before a human sees them.
-              Check yours free — no signup needed.
-            </p>
-            <div className="flex items-center justify-center gap-6 mt-6">
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-success" />
-                <span className="text-sm">10,000+ resumes checked</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-warning" />
-                <span className="text-sm">Results in 10 seconds</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-blue-500" />
-                <span className="text-sm">100% Free</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Input Form */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-xl">
-                  {result ? "Check Another Resume" : "Check Your ATS Score"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ATSCheckerForm
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading}
-                  error={error}
-                />
-              </CardContent>
-            </Card>
-
-            {/* Results */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-heading text-xl">
-                  {result ? "Your ATS Analysis" : "Your Results Will Appear Here"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {result ? (
-                  <div className="space-y-8">
-                    {/* Score Gauge */}
-                    <div className="flex flex-col items-center py-4">
-                      <ScoreGauge score={result.overall_score} size="lg" />
-                      <p className="text-sm text-muted-foreground mt-4 text-center">
-                        Processed in {result.processingTime}ms
-                      </p>
-                    </div>
-
-                    {/* Sub Scores */}
-                    <ATSScoreCard
-                      score={result.overall_score}
-                      subScores={[
-                        {
-                          label: "Keyword Match",
-                          value: result.keyword_score,
-                          icon: <Zap className="w-4 h-4" />,
-                        },
-                        {
-                          label: "Format Score",
-                          value: result.format_score,
-                          icon: <Shield className="w-4 h-4" />,
-                        },
-                        {
-                          label: "Skills Match",
-                          value: result.skills_score,
-                          icon: <CheckCircle2 className="w-4 h-4" />,
-                        },
-                        {
-                          label: "Experience",
-                          value: result.experience_score,
-                          icon: <Users className="w-4 h-4" />,
-                        },
-                      ]}
-                    />
-
-                    {/* Keywords */}
-                    <KeywordAnalysis
-                      matchedKeywords={result.matched_keywords}
-                      missingKeywords={result.missing_keywords}
-                      hardSkillsMatched={result.hard_skills_matched}
-                      hardSkillsMissing={result.hard_skills_missing}
-                    />
-
-                    {/* Suggestions */}
-                    {result.suggestions.high_priority.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2">
-                          <Lightbulb className="w-4 h-4 text-warning" />
-                          Top Fixes to Improve Your Score
-                        </h4>
-                        <ul className="space-y-2">
-                          {result.suggestions.high_priority.map((suggestion, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <CheckCircle2 className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                              <span>{suggestion}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* ATS Issues */}
-                    {result.ats_issues.length > 0 && (
-                      <div className="space-y-3">
-                        <h4 className="font-medium flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-destructive" />
-                          ATS Issues Found
-                        </h4>
-                        <ul className="space-y-2">
-                          {result.ats_issues.map((issue, i) => (
-                            <li key={i} className="flex items-start gap-2 text-sm">
-                              <AlertTriangle className="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
-                              <span>{issue}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-
-                    {/* CTA */}
-                    <div className="pt-4 border-t">
-                      <p className="text-sm text-muted-foreground mb-4 text-center">
-                        Want personalized improvements and AI-powered resume building?
-                      </p>
-                      <Link href="/auth/signup">
-                        <Button className="w-full bg-accent hover:bg-accent/90">
-                          Get Full Analysis + AI Resume Builder
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </Button>
-                      </Link>
-                    </div>
-
-                    {/* WhatsApp Share */}
-                    {result && (
-                      <div className="pt-4 border-t">
-                        <p className="text-sm text-muted-foreground mb-3 text-center">
-                          Share your score with friends
-                        </p>
-                        <a
-                          href={`https://wa.me/?text=${encodeURIComponent(`Just checked my resume on VELSEAI and got ${result.overall_score}/100 ATS score! 🎯\n${result.missing_keywords?.slice(0, 3).join(', ') ? `Missing keywords: ${result.missing_keywords.slice(0, 3).join(', ')}\n` : ''}Check yours FREE (no signup needed): https://velseai.com/ats-checker`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-[#25D366] hover:bg-[#20BD5C] text-white rounded-lg font-medium transition-colors"
-                        >
-                          <MessageCircle className="w-5 h-5" />
-                          Share on WhatsApp
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-16 text-center">
-                    <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-6">
-                      <svg
-                        className="w-12 h-12 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-                    </div>
-                    <h3 className="font-heading font-semibold text-lg mb-2">
-                      Ready to analyze your resume?
-                    </h3>
-                    <p className="text-sm text-muted-foreground max-w-sm">
-                      Paste your resume and a job description to get instant feedback on your ATS compatibility.
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-16 bg-muted/30">
-        <div className="container">
-          <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-12">
-            How It Works
-          </h2>
-          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            {[
-              { step: 1, title: "Paste Your Resume", desc: "Copy your resume text or upload a PDF" },
-              { step: 2, title: "Add Job Description", desc: "Paste the job posting you're targeting" },
-              { step: 3, title: "Get Instant Feedback", desc: "Receive your score and improvement tips" },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-accent text-accent-foreground font-bold text-xl flex items-center justify-center mx-auto mb-4">
-                  {item.step}
-                </div>
-                <h3 className="font-heading font-semibold text-lg mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-16">
-        <div className="container">
-          <h2 className="font-heading text-2xl md:text-3xl font-bold text-center mb-12">
-            Frequently Asked Questions
-          </h2>
-          <div className="max-w-3xl mx-auto space-y-4">
-            {faqs.map((faq, i) => (
-              <details key={i} className="group bg-card rounded-lg border">
-                <summary className="flex items-center justify-between p-4 cursor-pointer font-medium">
-                  {faq.q}
-                  <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
-                </summary>
-                <p className="px-4 pb-4 text-muted-foreground text-sm">{faq.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2026 VELSEAI. Built for job seekers worldwide.
-            </p>
-            <div className="flex items-center gap-4">
-              <Link href="/privacy" className="text-sm text-muted-foreground hover:text-primary">
-                Privacy
-              </Link>
-              <Link href="/terms" className="text-sm text-muted-foreground hover:text-primary">
-                Terms
-              </Link>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "react-router-dom"; // Note: In Next.js App router we'd use params, but this is client side fetch
+import { useParams, useRouter } from "next/navigation";
 import { 
   User, 
   Mail, 

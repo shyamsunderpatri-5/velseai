@@ -272,7 +272,7 @@ Return a JSON object with EXACTLY this structure (use null for missing fields, n
   "company_name": "string — the hiring company name",
   "job_title": "string — the exact job title",
   "location": "string or null — city, country, or 'Remote'",
-  "salary_range": "string or null — e.g. '€60,000–€80,000/year' or '₹15–20 LPA'",
+  "salary_range": "string or null — e.g. '$60,000–$80,000/year' or '€60,000–€80,000/year'",
   "job_type": "full_time|part_time|contract|remote|hybrid|unknown",
   "required_skills": ["array of required technical skills, tools, languages"],
   "nice_to_have_skills": ["array of preferred/bonus skills"],

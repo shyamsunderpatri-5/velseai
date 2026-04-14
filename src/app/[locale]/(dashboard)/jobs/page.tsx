@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Jobs Tracker Page (/dashboard/jobs)
  *

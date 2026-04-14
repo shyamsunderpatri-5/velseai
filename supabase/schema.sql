@@ -15,7 +15,6 @@ CREATE TABLE IF NOT EXISTS profiles (
   avatar_url TEXT,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'pro', 'lifetime')),
   plan_expires_at TIMESTAMPTZ,
-  razorpay_customer_id TEXT,
   stripe_customer_id TEXT,
   ats_checks_used INT DEFAULT 0,
   username TEXT UNIQUE,
@@ -114,8 +113,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   plan TEXT NOT NULL,
   amount INT NOT NULL,
-  currency TEXT DEFAULT 'INR',
-  payment_gateway TEXT NOT NULL CHECK (payment_gateway IN ('razorpay', 'stripe')),
+  currency TEXT DEFAULT 'USD',
+  payment_gateway TEXT NOT NULL CHECK (payment_gateway IN ('stripe')),
   gateway_payment_id TEXT,
   gateway_order_id TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'cancelled', 'expired', 'refunded')),
@@ -206,19 +205,23 @@ CREATE POLICY "Service role can manage anonymous checks" ON anonymous_ats_checks
 -- MIGRATION 003: Trigger to auto-create profile on signup
 -- =============================================
 
-CREATE OR REPLACE FUNCTION handle_new_user()
+CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  INSERT INTO profiles (id, email, full_name, avatar_url)
+  INSERT INTO public.profiles (id, email, full_name, avatar_url)
   VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name'),
+    COALESCE(
+      NEW.raw_user_meta_data->>'full_name', 
+      NEW.raw_user_meta_data->>'name', 
+      split_part(NEW.email, '@', 1)
+    ),
     NEW.raw_user_meta_data->>'avatar_url'
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
