@@ -7,6 +7,7 @@ export interface PersonalInfo {
   github?: string;
   portfolio?: string;
   summary?: string;
+  photo?: string | null;
 }
 
 export interface WorkExperience {

@@ -15,6 +15,8 @@ import { EducationSection } from "./EducationSection";
 import { SkillsSection } from "./SkillsSection";
 import { ProjectsSection } from "./ProjectsSection";
 import { CertificationsSection } from "./CertificationsSection";
+import { AIChatPanel } from "./AIChatPanel";
+import { TemplateSelector } from "./TemplateSelector";
 import { ResumePreview } from "../preview/ResumePreview";
 import { createClient } from "@/lib/supabase/client";
 import { useResumeStore } from "@/stores/resumeStore";
@@ -61,6 +63,8 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
   const router = useRouter();
   const [activeSection, setActiveSection] = React.useState("personal");
   const [showPreview, setShowPreview] = React.useState(true);
+  const [showAIChat, setShowAIChat] = React.useState(false);
+  const [selectedTemplate, setSelectedTemplate] = React.useState(initialResume.template_id || "modern");
   const supabase = createClient();
 
   const {
@@ -279,6 +283,11 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <TemplateSelector
+            currentTemplate={selectedTemplate}
+            onSelect={(id) => setSelectedTemplate(id)}
+          />
+          
           <div className="flex items-center gap-1 p-1 bg-white/5 rounded-lg border border-white/10 mr-4">
             <Button 
               variant="ghost" 
@@ -335,11 +344,22 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
               {isFixingResume ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
               AI Fix
             </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setShowAIChat(!showAIChat)}
+              className={cn(
+                "h-9 border-white/10",
+                showAIChat ? "bg-violet-600 border-violet-600 text-white" : "bg-white/5 text-white/70 hover:text-white"
+              )}
+            >
+              <Sparkles className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </div>
 
-      {/* 3-Panel Content */}
+      {/* 4-Panel Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Panel 1: Vertical Sidebar Navigation */}
         <div className="w-64 border-r border-white/5 bg-[#0D0D12] p-4 flex flex-col gap-2">
@@ -401,7 +421,7 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
 
         {/* Panel 3: Premium Live Preview */}
         {showPreview && (
-          <div className="hidden lg:flex w-[600px] xl:w-[800px] border-l border-white/5 bg-[#12121A] flex-col overflow-hidden animate-in slide-in-from-right duration-500">
+          <div className="hidden lg:flex border-l border-white/5 bg-[#12121A] flex-col overflow-hidden animate-in slide-in-from-right duration-500" style={{ width: showAIChat ? '400px' : '600px' }}>
             <div className="flex items-center justify-between px-6 py-4 border-b border-white/5 bg-white/[0.02]">
               <div className="flex items-center gap-2">
                 <Eye className="w-3.5 h-3.5 text-white/30" />
@@ -427,6 +447,14 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Panel 4: AI Chat Assistant */}
+        {showAIChat && (
+          <AIChatPanel 
+            className="w-[380px] border-l border-white/5"
+            resumeContext={JSON.stringify(content)}
+          />
         )}
       </div>
     </div>
