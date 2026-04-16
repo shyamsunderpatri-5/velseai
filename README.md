@@ -21,14 +21,13 @@
 ## Features
 
 ### 🎯 Pro ATS Checker
-- **Deep Analysis**: Proprietary scoring engine (Keywords, Format, Skills, Experience).
-- **Keyword Optimization**: One-click detection of missing technical terms.
-- **Job Tailoring**: Automatically adapt your resume to a specific job description.
+- **Deep Analysis Protocol**: Proprietary scoring engine (Keywords, Format, Skills, Experience).
+- **Keyword Intelligence**: One-click detection of missing technical terms with severity mapping.
 
-### 📄 Next-Gen AI Resume Builder
-- **Elite Templates**: Optimized for ATS logic (Modern, Tech, German CV/Lebenslauf, Arabic RTL).
-- **AI "Fix My Resume"**: One-click global optimization of summaries and bullet points.
-- **Multilingual AI**: Full support for English, German, French, Spanish, Portuguese, and Arabic.
+### 🧠 Intelligence Advisory Engine (Replaced Legacy Builders)
+- **Contextual Sentence Frames**: Instead of generating templated PDFs, VelseAI generates highly customized, copy-pasteable bullet points that inject missing keywords seamlessly into your existing experience.
+- **Multilingual AI Strategy**: Full support for evaluating resumes in English, German, French, Spanish, Portuguese, and Arabic.
+- **Authenticity Proofing**: Detects "keyword stuffing" and overly generic AI phrasing.
 
 ### 🤖 AI Technical Interview Engine
 - **Mock Interviews**: Interactive technical rounds (DSA/System Design) with a Senior Lead AI.
@@ -49,12 +48,12 @@
 
 To transform VelseAI into a tier-1 global SaaS leader, we are prioritizing these items for our next milestone:
 
-*   **AI Voice Integration**: Real-time "Listen & Speak" mode using OpenAI's Realtime API for immersive, low-latency mock interviews.
-*   **Referral Dashboard**: A dedicated portal for users to track referrals and earn free "Pro Months."
+*   **Performance Review Synthesizer (Brag Document)**: Retain hired users by allowing them to drop weekly messy notes, automatically generating their annual performance review or updating their passive resume.
+*   **"Passive Bait" LinkedIn Autobomber**: AI that drips optimal keywords into your LinkedIn profile to constantly trigger recruiter algorithms while you're employed.
+*   **Offer & Equity Negotiation Protocol**: Paste your job offer, and the AI evaluates market data to generate the exact aggressive email required to secure a 15% salary increase.
+*   **Referral Dashboard**: A dedicated portal for users to track referrals and earn free "Sprint Passes."
 *   **Market Intelligence (Salary Benchmarking)**: Real-time salary data for major US/Canada hubs integrated directly into the dashboard.
-*   **Premium PDF Customization**: "Design Pro" mode for granular control over typography, layouts, and color palettes.
-*   **Official WhatsApp Business API**: Upgrading to a verified business API for professional-grade transactional automation.
-*   **Enterprise Workspaces**: Secure multi-seat dashboards for recruitment agencies and university career departments.
+*   **AI Voice Integration**: Real-time "Listen & Speak" mode using OpenAI's Realtime API for immersive, low-latency mock interviews.
 
 ---
 
@@ -62,10 +61,9 @@ To transform VelseAI into a tier-1 global SaaS leader, we are prioritizing these
 
 - **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Framer Motion
 - **Backend**: Next.js API Routes + Supabase (PostgreSQL + RLS + Auth + Storage)
-- **AI Engine**: OpenAI GPT-4o (Production) / Ollama (Local Development)
+- **AI Engine**: Groq LPU (Ultra-Fast Parsing) + OpenAI GPT-4o (Deep Analysis)
 - **Ecosystem**: Chrome Extension (Manifest v3, Content Scripts, Background Workers)
 - **Automation**: Cron-based job alerts (WhatsApp/Telegram Webhooks)
-- **PDF/DOCX Generator**: Puppeteer + pdf-lib + docx
 - **Payments**: Stripe Global Integration (USD/CAD Focus)
 
 ---
@@ -74,10 +72,9 @@ To transform VelseAI into a tier-1 global SaaS leader, we are prioritizing these
 
 | Plan | Price | Features |
 |------|-------|----------|
-| **Free** | $0 | 1 resume, 3 templates, Basic ATS checks, Watermarked PDF |
-| **Starter** | $19/mo | 5 resumes, All templates, 3 Technical AI Mock Rounds/mo, No watermark |
-| **Pro** | $39/mo | Unlimited resumes, Unlimited AI Technical Rounds, Public Portfolio, Priority Support |
-| **Lifetime** | $149 | Everything in Pro, Forever (Founding Member Badge) |
+| **Trial** | $0 | 1 Basic ATS Check, Limited Analysis Visibility |
+| **Sprint Pass** | $9/30-days | Unlimited Intelligence Audits, Full AI Protocol Unlock, No Auto-Renewal |
+| **Career Dominion** | $49/yr | For passive job seekers: Auto-updating Brag Documents, Continuous LinkedIn Optimization advice |
 
 ---
 
