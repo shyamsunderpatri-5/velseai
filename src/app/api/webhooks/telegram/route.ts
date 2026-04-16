@@ -1,26 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
 import { JDExtractionSchema } from "@/lib/ai/structured-outputs";
-import { getJDVisionPrompt } from "@/lib/ai/prompts";
+import { getJDVisionPrompt, getTailorPrompt } from "@/lib/ai/prompts";
 import OpenAI from "openai";
-import { mediaIdToBase64 } from "@/lib/whatsapp/media";
+import { createClient } from "@/lib/supabase/server";
+import { resumeJsonToPdfBuffer } from "@/lib/pdf/generator";
 
 /**
- * VelseAI — Telegram Bot Webhook
- *
- * GET:  Not used (Telegram uses setWebhook API, not hub.challenge)
- * POST: Inbound message processor
- *
- * Setup:
- *   curl -F "url=https://velseai.com/api/webhooks/telegram" \
- *        https://api.telegram.org/bot{TOKEN}/setWebhook
- *
- * Supported message types:
- *   - photo → JD vision extraction → send structured reply + apply keyboard
- *   - text → command router (start, help, jobs, resume, link)
- *   - document (PDF) → acknowledge
- *
- * Architecture: same pattern as WhatsApp — return 200 immediately, process async.
+ * VelseAI — Telegram Bot Webhook v2.0
  */
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
@@ -84,18 +71,11 @@ async function tgDownloadBuffer(fileUrl: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// ─── GET: not used ────────────────────────────────────────────────────────────
-
-export async function GET() {
-  return NextResponse.json({ ok: true, bot: "VelseAI Telegram Bot" });
-}
-
 // ─── POST: message processor ──────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({}));
 
-  // Return 200 immediately — Telegram retries if we don't respond quickly
   processTelegramUpdateAsync(body as any).catch((err) => {
     Sentry.captureException(err);
     console.error("[Telegram] Async processing error:", err);
@@ -107,146 +87,167 @@ export async function POST(request: NextRequest) {
 // ─── Async processor ──────────────────────────────────────────────────────────
 
 async function processTelegramUpdateAsync(update: any) {
-  const message = (update.message || update.callback_query?.message);
+  const message = update.message || update.callback_query?.message;
   const callbackQuery = update.callback_query;
 
   if (!message) return;
 
-  const chatId = (message.chat as Record<string, unknown>)?.id as number;
-  const messageType = message.photo
-    ? "photo"
-    : message.document
-    ? "document"
-    : message.text
-    ? "text"
-    : "unknown";
+  const chatId = message.chat.id as number;
+  const supabase = await createClient();
 
   // ── Callback query (inline keyboard button press) ─────────────────────────
   if (callbackQuery) {
     const data = callbackQuery.data as string;
-    const callbackChatId = (
-      (callbackQuery.message as Record<string, unknown>)?.chat as Record<string, unknown>
-    )?.id as number;
 
-    // Acknowledge callback
     await fetch(`${TELEGRAM_API}/answerCallbackQuery`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ callback_query_id: callbackQuery.id }),
     });
 
-    if (data === "create_resume") {
-      await tgSendMessage(callbackChatId, "⚙️ Generating your ATS-optimized resume...\n\n_This takes ~20 seconds._");
-      // TODO: same flow as WhatsApp create_ats_resume button
+    if (data.startsWith("create_resume:")) {
+      const extractionId = data.split(":")[1];
+      await tgSendMessage(chatId, "⚙️ *Synthesis Protocol Initiated...*\n\nFetching your profile and tailoring for the role. This takes ~20 seconds.");
+
+      try {
+        // 1. Verify and Link Account
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("id, full_name")
+          .eq("telegram_chat_id", String(chatId))
+          .single();
+
+        if (!profile) {
+          await tgSendMessage(chatId, "⚠️ *Account Not Linked.*\n\nI need to know who you are first! Type /link to connect your Telegram to your VelseAI dashboard.");
+          return;
+        }
+
+        // 2. Fetch Extraction & Latest Resume
+        const [extractionRes, resumeRes] = await Promise.all([
+          supabase.from("bot_extractions").select("*").eq("id", extractionId).single(),
+          supabase.from("resumes").select("*").eq("user_id", profile.id).order("updated_at", { ascending: false }).limit(1).maybeSingle()
+        ]);
+
+        if (!extractionRes.data) throw new Error("JD metadata missing.");
+        if (!resumeRes.data) {
+          await tgSendMessage(chatId, "❌ *No Master Resume Found.*\n\nPlease upload or create a resume on velseai.com first so I have something to tailor!");
+          return;
+        }
+
+        // 3. AI Tailoring synthesis
+        const extraction = extractionRes.data;
+        const masterContent = resumeRes.data.content as any;
+        const jdText = extraction.full_jd_text || `${extraction.job_title} at ${extraction.company_name}. Skills: ${extraction.required_skills?.join(", ")}`;
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: "You are a professional resume writer specializing in ATS optimization." },
+            { role: "user", content: getTailorPrompt(JSON.stringify(masterContent), jdText, "en") }
+          ],
+          response_format: { type: "json_object" }
+        });
+
+        const tailoredContent = JSON.parse(completion.choices[0].message.content || "{}");
+
+        // 4. Generate PDF Buffer
+        const pdfBuffer = await resumeJsonToPdfBuffer(tailoredContent, {
+          template: "modern",
+          locale: "en"
+        });
+
+        // 5. Send PDF to Telegram
+        await tgSendDocument(
+          chatId,
+          pdfBuffer,
+          `VelseAI-${extraction.job_title.replace(/\s+/g, '-')}.pdf`,
+          `🎯 Here is your tailored resume for *${extraction.job_title}* at *${extraction.company_name}*!\n\nOptimize: 90%+ ATS Match.`
+        );
+
+      } catch (err) {
+        console.error("[Telegram] Tailoring error:", err);
+        await tgSendMessage(chatId, "❌ Synthesis failed. Our GPT protocols are under load. Please try again in 30s.");
+      }
     } else if (data === "link_account") {
       await tgSendMessage(
-        callbackChatId,
-        "🔗 *Link your VelseAI account:*\n\n1. Go to: velseai.com/settings/whatsapp\n2. Enter your Telegram user ID: `" +
-          String(callbackChatId) +
-          "`\n3. Tap \"Connect Telegram\"\n\nYou're ready to go! 🚀"
+        chatId,
+        `🔗 *Connect VelseAI Account*\n\nGo to: velseai.com/settings\nEnter this ID: \`${chatId}\``
       );
     }
     return;
   }
 
   // ── Photo: JD extraction ──────────────────────────────────────────────────
-  if (messageType === "photo") {
-    await tgSendMessage(chatId, "📸 Got your job description photo! Analyzing with AI... ⏳\n\n_Takes 10–15 seconds._");
+  if (message.photo) {
+    await tgSendMessage(chatId, "📸 Got the Job Description photo! Analyzing performance... ⏳");
 
     try {
-      const photos = message.photo as Record<string, unknown>[];
-      const bestPhoto = photos.sort((a, b) => (b.file_size as number) - (a.file_size as number))[0];
-      const fileId = bestPhoto.file_id as string;
-
-      const fileUrl = await tgGetFileUrl(fileId);
-      if (!fileUrl) {
-        await tgSendMessage(chatId, "❌ Could not download the image. Please try again.");
-        return;
-      }
+      const bestPhoto = message.photo.sort((a: any, b: any) => b.file_size - a.file_size)[0];
+      const fileUrl = await tgGetFileUrl(bestPhoto.file_id);
+      if (!fileUrl) throw new Error("Download failed");
 
       const imageBuffer = await tgDownloadBuffer(fileUrl);
-      const base64 = imageBuffer.toString("base64");
-      const dataUrl = `data:image/jpeg;base64,${base64}`;
+      const dataUrl = `data:image/jpeg;base64,${imageBuffer.toString("base64")}`;
 
-      // GPT-4o vision extraction
       const completion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: getJDVisionPrompt("en") },
-              { type: "image_url", image_url: { url: dataUrl, detail: "high" } },
-            ],
-          },
+          { role: "user", content: [
+            { type: "text", text: getJDVisionPrompt("en") },
+            { type: "image_url", image_url: { url: dataUrl, detail: "high" } }
+          ]}
         ],
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
+        response_format: { type: "json_object" }
       });
 
-      const rawContent = completion.choices[0]?.message?.content || "{}";
-      let extraction;
-      try {
-        extraction = JDExtractionSchema.parse(JSON.parse(rawContent));
-      } catch {
-        await tgSendMessage(chatId, "❌ Couldn't read the job description clearly. Try a higher-quality photo.");
-        return;
-      }
+      const raw = JSON.parse(completion.choices[0].message.content || "{}");
+      const extraction = JDExtractionSchema.parse(raw);
 
-      const skills = extraction.required_skills.slice(0, 6).join(", ");
-      const salaryLine = extraction.salary_range ? `\n💰 *Salary:* ${extraction.salary_range}` : "";
-      const locationLine = extraction.location ? `\n📍 *Location:* ${extraction.location}` : "";
+      // Save to Database
+      const { data: savedExt, error } = await supabase
+        .from("bot_extractions")
+        .insert({
+          platform: "telegram",
+          source_id: String(chatId),
+          job_title: extraction.job_title,
+          company_name: extraction.company_name,
+          location: extraction.location,
+          salary_range: extraction.salary_range,
+          required_skills: extraction.required_skills,
+          raw_extraction: extraction
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
 
       const summary =
-        `✅ *Job Description Analyzed!*\n\n` +
+        `✅ *Analysis Complete*\n\n` +
         `🏢 *${extraction.company_name}*\n` +
-        `💼 ${extraction.job_title}${locationLine}${salaryLine}\n\n` +
-        `🛠️ *Key Skills:* ${skills}\n\n` +
-        `What would you like to do?`;
+        `💼 ${extraction.job_title}\n` +
+        `🛠️ Skills: ${extraction.required_skills.slice(0, 5).join(", ")}\n\n` +
+        `Ready to tailor your resume?`;
 
       await tgSendInlineKeyboard(chatId, summary, [
         [
-          { text: "🎯 Create ATS Resume", callback_data: "create_resume" },
-          { text: "🔗 Link My Account", callback_data: "link_account" },
-        ],
+          { text: "🎯 Tailor My Resume", callback_data: `create_resume:${savedExt.id}` },
+          { text: "🔗 Link Account", callback_data: "link_account" }
+        ]
       ]);
     } catch (err) {
-      console.error("[Telegram] Photo processing error:", err);
-      await tgSendMessage(chatId, "❌ Something went wrong. Please try again.");
+      console.error("[Telegram] Scan error:", err);
+      await tgSendMessage(chatId, "❌ Failed to scan JD. Try a clearer photo.");
     }
     return;
   }
 
   // ── Text commands ─────────────────────────────────────────────────────────
-  if (messageType === "text") {
-    const text = ((message.text as string) || "").toLowerCase().trim();
-
-    if (text === "/start" || text === "/help" || text === "help") {
-      await tgSendInlineKeyboard(
-        chatId,
-        [
-          "👋 *Welcome to VelseAI Bot!* Your AI career co-pilot on Telegram.\n",
-          "Here's what I can do:\n",
-          "📸 *Send a photo* of any job posting → I'll extract and tailor your resume",
-          "💼 /jobs → See your job tracker",
-          "📄 /resume → Manage resumes",
-          "🔗 /link → Connect your VelseAI account",
-          "❓ /help → This menu\n",
-          "Not a user yet? Sign up free at *velseai.com* 🚀",
-        ].join("\n"),
-        [[{ text: "🌐 Open VelseAI", callback_data: "open_app" }]]
-      );
-    } else if (text === "/jobs") {
-      await tgSendMessage(chatId, "💼 View your job tracker at:\nhttps://velseai.com/jobs");
-    } else if (text === "/resume") {
-      await tgSendMessage(chatId, "📄 Manage your resumes at:\nhttps://velseai.com/resume\n\nOr send me a job description photo to tailor it automatically! 📸");
+  if (message.text) {
+    const text = message.text.toLowerCase();
+    if (text === "/start" || text === "/help") {
+      await tgSendMessage(chatId, "👋 *VelseAI Telegram HQ*\n\nSend me a photo of a Job Description and I'll tailor your resume in 20 seconds.\n\n/link - Connect your account\n/jobs - View tracker");
     } else if (text === "/link") {
-      await tgSendMessage(
-        chatId,
-        `🔗 *Link your VelseAI account:*\n\n1. Go to: velseai.com/settings\n2. Enter your Telegram Chat ID: \`${chatId}\`\n3. Save settings`
-      );
-    } else {
-      await tgSendMessage(chatId, "🤔 I'm best with *job description photos*!\n\nSend me a screenshot of a job posting and I'll create a tailored resume.\n\nType /help for all commands.");
+      await tgSendMessage(chatId, `🔗 *Link ID:* \`${chatId}\`\n\nEnter this on velseai.com/settings.`);
     }
   }
 }

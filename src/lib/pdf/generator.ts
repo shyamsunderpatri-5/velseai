@@ -13,6 +13,9 @@
  */
 
 import { PDFDocument, rgb, StandardFonts, PDFPage } from "pdf-lib";
+import fontkit from "@pdf-lib/fontkit";
+import fs from "fs";
+import path from "path";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -58,9 +61,10 @@ export interface ResumeContent {
 
 export interface PdfGenerationOptions {
   content: ResumeContent;
-  template?: "modern" | "classic" | "minimal" | "lebenslauf";
+  template?: "modern" | "classic" | "minimal" | "institutional" | "lebenslauf" | "viral_sidebar" | "elite_future";
   locale?: string;
   accentColor?: { r: number; g: number; b: number }; // 0-1 scale
+  photoUrl?: string; // Optional headshot/profile photo
 }
 
 // ─── Color Palette ────────────────────────────────────────────────────────────
@@ -93,12 +97,38 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
   pdfDoc.setCreator("VelseAI Career Co-Pilot");
   pdfDoc.setTitle(`${content.personal_info.name} — Resume`);
 
-  // Load standard fonts (no external font fetch needed)
-  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-  const fontReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fontItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+  pdfDoc.registerFontkit(fontkit);
+
+  // Load standard fonts as fallback
+  const fontSerifReg = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+  const fontSerifBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+
+  // Load Custom Inter Fonts
+  const fontsPath = path.join(process.cwd(), "src", "lib", "pdf", "fonts");
+  const interRegBytes = fs.readFileSync(path.join(fontsPath, "Inter-Regular.otf"));
+  const interBoldBytes = fs.readFileSync(path.join(fontsPath, "Inter-Bold.otf"));
+  const interItalicBytes = fs.readFileSync(path.join(fontsPath, "Inter-Italic.otf"));
+
+  const fontReg = await pdfDoc.embedFont(interRegBytes);
+  const fontBold = await pdfDoc.embedFont(interBoldBytes);
+  const fontItalic = await pdfDoc.embedFont(interItalicBytes);
+
+  const templateType = options.template || "modern";
+  const isSerif = templateType === "classic" || templateType === "lebenslauf";
+  const isViral = templateType === "viral_sidebar";
+  const isElite = templateType === "elite_future";
+  
+  const fBold = isSerif ? fontSerifBold : fontBold;
+  const fReg = isSerif ? fontSerifReg : fontReg;
+  const fItalic = isSerif ? fontSerifReg : fontItalic; // Approximation
 
   const accent = rgb(accentColor.r, accentColor.g, accentColor.b);
+  const accentLight = rgb(accentColor.r * 0.15 + 0.85, accentColor.g * 0.1 + 0.9, accentColor.b * 0.15 + 0.85);
+
+  // Layout Config
+  const SIDEBAR_W = isViral ? 170 : 0;
+  const MAIN_X = isViral ? SIDEBAR_W + 30 : MARGIN_X;
+  const MAIN_W = isViral ? PAGE_W - MAIN_X - MARGIN_X : CONTENT_W;
 
   // Page state — auto-paginate
   const pages: PDFPage[] = [];
@@ -106,31 +136,82 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
   pages.push(page);
   let y = PAGE_H - MARGIN_Y;
 
+  // ── Helper: draw sidebar background (for Viral) ───────────────────────────
+  function drawSidebarBg(pg: PDFPage) {
+    if (isViral) {
+      pg.drawRectangle({
+        x: 0,
+        y: 0,
+        width: SIDEBAR_W,
+        height: PAGE_H,
+        color: accentLight,
+      });
+    }
+  }
+  drawSidebarBg(page);
+
   // ── Helper: ensure space, add new page if needed ──────────────────────────
   function ensureSpace(height: number) {
     if (y - height < MARGIN_Y + 20) {
       page = pdfDoc.addPage([PAGE_W, PAGE_H]);
       pages.push(page);
+      drawSidebarBg(page);
       y = PAGE_H - MARGIN_Y;
     }
   }
 
   // ── Helper: draw section heading ──────────────────────────────────────────
-  function drawSectionHeading(title: string, yPos: number): number {
-    page.drawRectangle({
-      x: MARGIN_X,
-      y: yPos - 2,
-      width: CONTENT_W,
-      height: 18,
-      color: COLORS.lightGray,
-    });
-    page.drawText(title.toUpperCase(), {
-      x: MARGIN_X + 4,
-      y: yPos + 2,
-      size: 8.5,
-      font: fontBold,
-      color: accent,
-    });
+  function drawSectionHeading(title: string, yPos: number, xPos = MAIN_X, width = MAIN_W): number {
+    const isInstitutional = templateType === "institutional";
+    const barColor = isInstitutional ? COLORS.black : isElite ? accent : COLORS.lightGray;
+    const textColor = isInstitutional || isElite ? COLORS.white : accent;
+
+    if (isElite) {
+      // Futuristic geometric header
+      page.drawRectangle({
+        x: xPos,
+        y: yPos - 2,
+        width: 4,
+        height: 18,
+        color: accent,
+      });
+      page.drawText(title.toUpperCase(), {
+        x: xPos + 10,
+        y: yPos + 2,
+        size: 9,
+        font: fBold,
+        color: COLORS.black,
+      });
+      page.drawLine({
+        start: { x: xPos + 10, y: yPos - 4 },
+        end: { x: xPos + width, y: yPos - 4 },
+        thickness: 0.5,
+        color: accent,
+      });
+      // Geometric enclosing bar
+      page.drawRectangle({
+        x: xPos + width,
+        y: yPos - 4,
+        width: 4,
+        height: 4,
+        color: accent,
+      });
+    } else {
+      page.drawRectangle({
+        x: xPos,
+        y: yPos - 2,
+        width: width,
+        height: 18,
+        color: barColor,
+      });
+      page.drawText(title.toUpperCase(), {
+        x: xPos + 4,
+        y: yPos + 2,
+        size: 8.5,
+        font: fBold,
+        color: textColor,
+      });
+    }
     return yPos - 24;
   }
 
@@ -155,47 +236,118 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // HEADER
+  // HEADER (Smart Reflow + Photo Support)
   // ─────────────────────────────────────────────────────────────────────────────
 
+  const isMinimal = templateType === "minimal";
+  const isInstitutional = templateType === "institutional";
+
   // Name
-  const nameSize = 26;
-  page.drawText(content.personal_info.name, {
-    x: MARGIN_X,
-    y,
-    size: nameSize,
-    font: fontBold,
-    color: COLORS.black,
-  });
-  y -= nameSize + 6;
+  const nameSize = isMinimal ? 22 : isElite ? 36 : 26;
+  if (isMinimal) {
+    const nameW = fBold.widthOfTextAtSize(content.personal_info.name, nameSize);
+    page.drawText(content.personal_info.name, {
+      x: (PAGE_W - nameW) / 2,
+      y,
+      size: nameSize,
+      font: fBold,
+      color: COLORS.black,
+    });
+  } else if (isViral) {
+    // Top Name across both columns
+    page.drawText(content.personal_info.name, {
+      x: MARGIN_X,
+      y,
+      size: 28,
+      font: fBold,
+      color: COLORS.black,
+    });
+  } else if (isElite) {
+    page.drawText(content.personal_info.name.toUpperCase(), {
+      x: MARGIN_X,
+      y,
+      size: nameSize,
+      font: fBold,
+      color: COLORS.black,
+    });
+  } else {
+    page.drawText(content.personal_info.name, {
+      x: MARGIN_X,
+      y,
+      size: nameSize,
+      font: fBold,
+      color: COLORS.black,
+    });
+  }
+  y -= nameSize + (isMinimal || isElite ? 4 : 6);
 
   // Contact line
   const contactParts = [
     content.personal_info.email,
     content.personal_info.phone,
     content.personal_info.location,
-    content.personal_info.linkedin && `linkedin.com/in/${content.personal_info.linkedin.replace(/.*\/in\//, "")}`,
-    content.personal_info.website,
+    content.personal_info.linkedin && `ln: ${content.personal_info.linkedin.replace(/.*\/in\//, "")}`,
   ].filter(Boolean) as string[];
 
-  const contactLine = contactParts.join("  •  ");
-  page.drawText(contactLine, {
-    x: MARGIN_X,
-    y,
-    size: 8.5,
-    font: fontReg,
-    color: COLORS.gray,
-  });
-  y -= 14;
+  const contactLine = contactParts.join("  ·  ");
+  if (isMinimal) {
+    const contactW = fReg.widthOfTextAtSize(contactLine, 8);
+    page.drawText(contactLine, { x: (PAGE_W - contactW) / 2, y, size: 8, font: fReg, color: COLORS.gray });
+    y -= 12;
+  } else if (isViral) {
+    page.drawText(contactLine, { x: MARGIN_X, y, size: 8, font: fReg, color: COLORS.darkGray });
+    y -= 14;
+  } else {
+    page.drawText(contactLine, { x: MARGIN_X, y, size: 8.5, font: fReg, color: COLORS.gray });
+    y -= 14;
+  }
 
   // Accent divider
-  page.drawLine({
-    start: { x: MARGIN_X, y },
-    end: { x: PAGE_W - MARGIN_X, y },
-    thickness: 1.5,
-    color: accent,
-  });
-  y -= 14;
+  if (!isMinimal && !isViral) {
+    const dividerColor = isInstitutional ? COLORS.black : accent;
+    page.drawLine({
+      start: { x: MARGIN_X, y },
+      end: { x: PAGE_W - MARGIN_X, y },
+      thickness: isInstitutional ? 2 : isElite ? 3 : 1.5,
+      color: dividerColor,
+    });
+    y -= 14;
+  } else if (isViral) {
+    y -= 25; // Space for viral header to settle
+  } else {
+    y -= 16;
+  }
+
+  // ── VIRAL SIDEBAR CONTENT: Skills & Edu ──────────────────────────────────
+  let sidebarY = y;
+  if (isViral) {
+    // We'll draw skills and education in the sidebar later,
+    // for now we just adjust the main Y to start at the top of the main column.
+    // Actually, let's draw them immediately.
+    
+    // Summary in Sidebar? No, experience in main. 
+    // Let's put Skills & Contact details in sidebar.
+    
+    sidebarY = y;
+    page.drawText("CONTACT", { x: MARGIN_X, y: sidebarY, size: 9, font: fBold, color: accent });
+    sidebarY -= 15;
+    for (const part of contactParts) {
+      const lines = wrapText(part, fReg, 8, SIDEBAR_W - MARGIN_X - 10);
+      for (const l of lines) {
+        page.drawText(l, { x: MARGIN_X, y: sidebarY, size: 8, font: fReg, color: COLORS.darkGray });
+        sidebarY -= 12;
+      }
+      sidebarY -= 4;
+    }
+
+    sidebarY -= 20;
+    page.drawText("EXPERTISE", { x: MARGIN_X, y: sidebarY, size: 9, font: fBold, color: accent });
+    sidebarY -= 15;
+    for (const skill of content.skills) {
+      page.drawText(skill.toUpperCase(), { x: MARGIN_X, y: sidebarY, size: 7.5, font: fBold, color: COLORS.darkGray });
+      sidebarY -= 14;
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // SUMMARY
@@ -204,10 +356,10 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
   if (content.summary) {
     ensureSpace(50);
     y = drawSectionHeading("Professional Summary", y);
-    const lines = wrapText(content.summary, fontItalic, 9.5, CONTENT_W);
+    const lines = wrapText(content.summary, fItalic, 9.5, MAIN_W);
     for (const line of lines) {
       ensureSpace(14);
-      page.drawText(line, { x: MARGIN_X, y, size: 9.5, font: fontItalic, color: COLORS.darkGray });
+      page.drawText(line, { x: MAIN_X, y, size: 9.5, font: fItalic, color: COLORS.darkGray });
       y -= 13;
     }
     y -= 8;
@@ -226,36 +378,36 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
 
       // Job title bold + dates right-aligned
       const dateStr = `${exp.start_date} – ${exp.end_date || "Present"}`;
-      const dateWidth = fontReg.widthOfTextAtSize(dateStr, 9);
-      page.drawText(exp.title, { x: MARGIN_X, y, size: 10.5, font: fontBold, color: COLORS.black });
+      const dateWidth = fReg.widthOfTextAtSize(dateStr, 9);
+      page.drawText(exp.title, { x: MAIN_X, y, size: 10.5, font: fBold, color: COLORS.black });
       page.drawText(dateStr, {
-        x: PAGE_W - MARGIN_X - dateWidth,
+        x: MAIN_X + MAIN_W - dateWidth,
         y,
         size: 9,
-        font: fontReg,
+        font: fReg,
         color: COLORS.gray,
       });
-      y -= 13;
+      y -= 14;
 
       // Company + location
       const companyLine = exp.location ? `${exp.company}  ·  ${exp.location}` : exp.company;
-      page.drawText(companyLine, { x: MARGIN_X, y, size: 9, font: fontItalic, color: accent });
-      y -= 13;
+      page.drawText(companyLine, { x: MAIN_X, y, size: 9.5, font: fItalic, color: accent });
+      y -= 14;
 
       // Bullets
       for (const bullet of exp.bullets) {
-        const bulletLines = wrapText(`• ${bullet}`, fontReg, 9, CONTENT_W - 12);
+        const bulletLines = wrapText(`• ${bullet}`, fReg, 9, MAIN_W - 12);
         for (let i = 0; i < bulletLines.length; i++) {
-          ensureSpace(13);
+          ensureSpace(14);
           const indent = i === 0 ? 0 : 8;
           page.drawText(bulletLines[i], {
-            x: MARGIN_X + indent,
+            x: MAIN_X + indent,
             y,
             size: 9,
-            font: fontReg,
+            font: fReg,
             color: COLORS.darkGray,
           });
-          y -= 12;
+          y -= 13; // increased leading
         }
       }
       y -= 6;
@@ -264,10 +416,10 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // SKILLS — horizontal chips layout
+  // SKILLS (Standard Templates)
   // ─────────────────────────────────────────────────────────────────────────────
 
-  if (content.skills.length > 0) {
+  if (!isViral && content.skills.length > 0) {
     ensureSpace(40);
     y = drawSectionHeading("Skills", y);
 
@@ -278,7 +430,7 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
     const chipGapY = 6;
 
     for (const skill of content.skills) {
-      const textW = fontReg.widthOfTextAtSize(skill, 8.5);
+      const textW = fReg.widthOfTextAtSize(skill, 8.5);
       const chipW = textW + chipPadX * 2;
 
       if (xCursor + chipW > PAGE_W - MARGIN_X) {
@@ -303,7 +455,7 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
         x: xCursor + chipPadX,
         y: y - 7,
         size: 8.5,
-        font: fontReg,
+        font: fReg,
         color: rgb(accentColor.r * 0.7, accentColor.g * 0.4, accentColor.b * 0.9),
       });
 
@@ -318,18 +470,19 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
 
   if (content.education.length > 0) {
     ensureSpace(40);
-    y = drawSectionHeading("Education", y);
+    const eduTitle = templateType === "lebenslauf" ? "Ausbildung" : "Education";
+    y = drawSectionHeading(eduTitle, y);
 
     for (const edu of content.education) {
       ensureSpace(28);
       const degreeStr = edu.field ? `${edu.degree} in ${edu.field}` : edu.degree;
-      page.drawText(degreeStr, { x: MARGIN_X, y, size: 10, font: fontBold, color: COLORS.black });
+      page.drawText(degreeStr, { x: MAIN_X, y, size: 10, font: fBold, color: COLORS.black });
       if (edu.graduation_year) {
-        const yrW = fontReg.widthOfTextAtSize(edu.graduation_year, 9);
-        page.drawText(edu.graduation_year, { x: PAGE_W - MARGIN_X - yrW, y, size: 9, font: fontReg, color: COLORS.gray });
+        const yrW = fReg.widthOfTextAtSize(edu.graduation_year, 9);
+        page.drawText(edu.graduation_year, { x: MAIN_X + MAIN_W - yrW, y, size: 9, font: fReg, color: COLORS.gray });
       }
       y -= 13;
-      page.drawText(edu.institution, { x: MARGIN_X, y, size: 9, font: fontItalic, color: accent });
+      page.drawText(edu.institution, { x: MAIN_X, y, size: 9, font: fItalic, color: accent });
       y -= 14;
     }
     y -= 4;
@@ -345,16 +498,16 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
 
     for (const proj of content.projects) {
       ensureSpace(28);
-      page.drawText(proj.name, { x: MARGIN_X, y, size: 10, font: fontBold, color: COLORS.black });
+      page.drawText(proj.name, { x: MAIN_X, y, size: 10, font: fBold, color: COLORS.black });
       y -= 13;
-      const descLines = wrapText(proj.description, fontReg, 9, CONTENT_W);
+      const descLines = wrapText(proj.description, fReg, 9, MAIN_W);
       for (const line of descLines) {
         ensureSpace(12);
-        page.drawText(line, { x: MARGIN_X, y, size: 9, font: fontReg, color: COLORS.darkGray });
+        page.drawText(line, { x: MAIN_X, y, size: 9, font: fReg, color: COLORS.darkGray });
         y -= 12;
       }
       if (proj.tech && proj.tech.length > 0) {
-        page.drawText(`Stack: ${proj.tech.join(", ")}`, { x: MARGIN_X, y, size: 8.5, font: fontItalic, color: COLORS.gray });
+        page.drawText(`Stack: ${proj.tech.join(", ")}`, { x: MAIN_X, y, size: 8.5, font: fItalic, color: COLORS.gray });
         y -= 12;
       }
       y -= 6;
@@ -370,7 +523,7 @@ export async function generateResumePdf(options: PdfGenerationOptions): Promise<
       x: MARGIN_X,
       y: MARGIN_Y - 20,
       size: 7,
-      font: fontReg,
+      font: fReg,
       color: COLORS.lightGray,
     });
   }

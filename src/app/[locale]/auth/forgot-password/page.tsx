@@ -23,22 +23,19 @@ export default function ForgotPasswordPage() {
     setError(null);
 
     try {
-      const response = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      const supabase = createClient();
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Failed to send reset link");
+      if (resetError) {
+        setError(resetError.message);
         return;
       }
 
       setSent(true);
     } catch (err) {
-      setError("An unexpected error occurred");
+      setError("An unexpected error occurred during the transmission.");
     } finally {
       setIsLoading(false);
     }
@@ -49,12 +46,12 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen flex flex-col bg-[#0D0D12]">
         <header className="border-b border-white/5">
           <div className="container flex h-16 items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <span className="font-heading font-bold text-xl text-white">VELSEAI</span>
-            </Link>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
+              <span className="text-white font-black text-xl leading-none">V</span>
+            </div>
+            <span className="font-heading font-black text-xl text-white tracking-tighter">VELSEAI</span>
+          </Link>
           </div>
         </header>
 
@@ -93,11 +90,11 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex flex-col bg-[#0D0D12]">
       <header className="border-b border-white/5">
         <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
+              <span className="text-white font-black text-xl leading-none">V</span>
             </div>
-            <span className="font-heading font-bold text-xl text-white">VELSEAI</span>
+            <span className="font-heading font-black text-xl text-white tracking-tighter">VELSEAI</span>
           </Link>
         </div>
       </header>

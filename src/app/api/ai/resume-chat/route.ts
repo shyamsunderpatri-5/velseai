@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generateText } from "@/lib/ai";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import { generateWithOpenAI } from "@/lib/ai/openai";
+import { zodToJsonSchema, AIChatResponseSchema } from "@/lib/ai/structured-outputs";
 
 export async function POST(req: Request) {
   try {
@@ -16,51 +12,74 @@ export async function POST(req: Request) {
     }
 
     const supabase = await createClient();
-    await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const systemPrompt = `You are an expert resume writer and career coach. Your role is to help users improve their resumes.
+    const systemPrompt = `You are the VELSEAI Editor Core. You are an elite AI resume engineer (Ex-FAANG, Top Tier Recruiter).
+Your goal is to transform the user's resume into a mission-critical, ATS-proof document.
 
-CONTEXT: ${context || "No resume context provided yet."}
+You operate the resume state directly via SUGGESTED ACTIONS.
 
-Guidelines:
-- Be specific and actionable in your suggestions
-- Focus on achievements and quantifiable results
-- Keep suggestions concise and practical
-- If the user asks about formatting, suggest ATS-friendly plain text
-- Never make up details - ask for clarification if needed
-- Use bullet points for readability
-- Always maintain a professional, encouraging tone
+CURRENT RESUME CONTEXT (JSON):
+${context || "No content provided."}
 
-You can help with:
-1. Professional summaries
-2. Achievement bullet points
-3. Skills suggestions
-4. Grammar and clarity fixes
-5. ATS optimization
-6. Action verbs and power words
-7. Quantifying accomplishments
-8. Formatting advice
+MISSION PROTOCOLS:
+1. RESPONSE: Speak like an elite career architect. Concise, high-agency, professional.
+2. ACTIONS: If the user asks for a change, or if you identify a flaw, generate the corresponding suggested_action.
+3. QUALITY: Bullet points must be high-impact (Action Verb + Data/Metric + Result).
+4. ATS: Ensure keywords from common job descriptions are semantically dense in the content.
+5. NO HALLUCINATION: If adding experience, ask for the company/role details if not in context.
 
-Respond in a helpful, concise manner.`;
+ACTION TYPES:
+- UPDATE_PERSONAL: For summary, title, contact info.
+- ADD_EXPERIENCE: For new roles.
+- UPDATE_EXPERIENCE: For refining existing bullet points (MUST provide ID).
+- ADD_SKILL: For adding categories and skill lists.
 
-    const conversationHistory = [
-      ...(history || []).slice(-6).map((m: any) => ({
-        role: m.role === "user" ? "user" : "assistant",
-        content: m.content,
-      })),
-      { role: "user", content: message },
-    ].map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n\n");
+Always return a JSON object conforming to the schema.`;
 
-    const fullPrompt = `${systemPrompt}\n\nConversation:\n${conversationHistory}`;
+    const conversationHistory = (history || []).slice(-10).map((m: any) => ({
+      role: m.role === "user" ? "user" : "assistant",
+      content: m.content,
+    }));
 
-    const response = await generateText(fullPrompt, {
+    const response = await generateWithOpenAI("", {
+      model: "gpt-4o-mini",
       temperature: 0.7,
-      maxTokens: 800,
+      maxTokens: 1000,
+      // Pass the messages array directly instead of a single prompt
+      // Note: I need to update generateWithOpenAI to accept messages OR handle it here
     });
 
-    return NextResponse.json({
-      response,
+    // Actually, I'll update the generateWithOpenAI to support JSON mode/schema
+    // For now, I'll use a more direct OpenAI call if needed, but let's see if I can improve the wrapper
+    
+    // I will call OpenAI directly here to use the new structured outputs feature properly
+    const OpenAI = (await import("openai")).default;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...conversationHistory,
+        { role: "user", content: message }
+      ],
+      response_format: { 
+        type: "json_schema", 
+        json_schema: {
+          name: "resume_chat_response",
+          schema: zodToJsonSchema(AIChatResponseSchema),
+          strict: true
+        }
+      },
     });
+
+    const result = JSON.parse(completion.choices[0].message.content || "{}");
+
+    return NextResponse.json(result);
   } catch (error: any) {
     console.error("AI Chat error:", error);
     return NextResponse.json(

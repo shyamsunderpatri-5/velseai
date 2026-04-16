@@ -3,39 +3,29 @@
 @import "tailwindcss";
 
 :root {
-  --navy: #0F0F1A;
-  --purple: #7C3AED;
-  --purple-light: #A78BFA;
-  --purple-dark: #5B21B6;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --muted: #6B7280;
-  --font-heading: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'DM Sans', sans-serif;
-  
-  --background: #0F0F1A;
-  --foreground: #FAFAFA;
-  --card: #18181B;
-  --card-foreground: #FAFAFA;
-  --popover: #18181B;
-  --popover-foreground: #FAFAFA;
+  --background: #050506;
+  --foreground: #FFFFFF;
+  --card: #0C0C0E;
+  --card-foreground: #FFFFFF;
+  --popover: #0C0C0E;
+  --popover-foreground: #FFFFFF;
   --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
-  --secondary: #27272A;
-  --secondary-foreground: #FAFAFA;
-  --muted-foreground: #A1A1AA;
+  --secondary: #161618;
+  --secondary-foreground: #A1A1AA;
+  --muted: #161618;
+  --muted-foreground: #71717A;
+  --accent: #1F1F23;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #3F3F46;
-  --input: #3F3F46;
+  --border: #1F1F23;
+  --input: #1F1F23;
   --ring: #7C3AED;
   --radius: 0.75rem;
-  --chart-1: #7C3AED;
-  --chart-2: #10B981;
-  --chart-3: #F59E0B;
-  --chart-4: #3B82F6;
-  --chart-5: #EC4899;
+  
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
 }
 
 @theme inline {
@@ -57,15 +47,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-navy: var(--navy);
-  --color-navy-foreground: #FFFFFF;
-  --color-purple: var(--purple);
-  --color-purple-light: var(--purple-light);
-  --color-purple-foreground: #FFFFFF;
-  --color-success: var(--success);
-  --color-success-foreground: #FFFFFF;
-  --color-warning: var(--warning);
-  --color-warning-foreground: #000000;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -80,138 +61,87 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-image: 
+    radial-gradient(circle at 50% -20%, rgba(124, 58, 237, 0.08), transparent 40%),
+    radial-gradient(circle at 0% 0%, rgba(124, 58, 237, 0.05), transparent 30%);
+  background-attachment: fixed;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-.font-heading {
-  font-family: var(--font-heading);
+/* Premium Utilities */
+.glass {
+  background: rgba(12, 12, 14, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.font-body {
-  font-family: var(--font-body);
+.glass-morphism {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
-.text-navy {
-  color: var(--navy);
+.bg-pattern-grid {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
 }
 
-.bg-navy {
-  background-color: var(--navy);
+/* Animations */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
-.text-purple {
-  color: var(--purple);
+.animate-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
 }
 
-.bg-purple {
-  background-color: var(--purple);
-}
-
-.text-success {
-  color: var(--success);
-}
-
-.bg-success {
-  background-color: var(--success);
-}
-
-/* Rezi-style glow effects */
-@keyframes purple-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(124, 58, 237, 0.6);
-  }
-}
-
-.animate-purple-glow {
-  animation: purple-glow 2s ease-in-out infinite;
-}
-
-/* Floating animation */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Gradient text */
-.bg-gradient-purple {
-  background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Card hover effects */
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(124, 58, 237, 0.15);
-}
-
-/* Button shine effect */
-@keyframes shine {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.btn-shine:hover::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  animation: shine 0.6s ease-out;
-}
-
-/* Scrollbar styling */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--secondary);
+  background: var(--background);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--muted-foreground);
-  border-radius: 3px;
+  background: #1F1F23;
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
 
-/* Focus ring */
-.focus-ring:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.4);
+/* Rezi-style specific cards */
+.rezi-card {
+  background: #0C0C0E;
+  border: 1px solid #1F1F23;
+  border-radius: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.rezi-card:hover {
+  border-color: rgba(124, 58, 237, 0.3);
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.05);
+  transform: translateY(-2px);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #FFFFFF 0%, #A1A1AA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+

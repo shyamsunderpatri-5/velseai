@@ -2,17 +2,19 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    default: "VELSEAI - AI ATS Resume Builder",
+    default: "Free ATS Resume Checker & Scanner | VELSEAI",
     template: "%s | VELSEAI",
   },
   description:
-    "Beat the ATS filter and land your dream job. VELSEAI's AI-powered resume builder helps job seekers create ATS-optimized resumes that get interviews.",
+    "Free ATS Resume Checker. Instantly score your resume against job descriptions using enterprise-grade AI. Bypass filter gatekeepers and land the interview today.",
   keywords: [
-    "ATS resume checker",
-    "resume builder",
-    "ATS optimized resume",
-    "job resume builder",
-    "AI resume writer",
+    "Free ATS resume checker",
+    "ATS checker",
+    "resume scanner",
+    "free resume score",
+    "check resume for ATS",
+    "online ATS scanner",
+    "VELSEAI resume builder",
   ],
   authors: [{ name: "VELSEAI" }],
   openGraph: {
@@ -20,13 +22,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://velseai.com",
     siteName: "VELSEAI",
-    title: "VELSEAI - AI ATS Resume Builder",
-    description: "Beat the ATS filter and land your dream job.",
+    title: "Free ATS Resume Checker & Scanner | VELSEAI",
+    description: "Get your free ATS resume score in seconds with VELSEAI AI.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VELSEAI - AI ATS Resume Builder",
-    description: "Beat the ATS filter and land your dream job.",
+    title: "Free ATS Resume Checker & Scanner | VELSEAI",
+    description: "Instantly check if your resume is ATS-friendly for free.",
   },
   robots: {
     index: true,

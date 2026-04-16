@@ -20,6 +20,8 @@ export interface ATSResult {
   format_score: number;
   skills_score: number;
   experience_score: number;
+  impact_score: number;
+  readability_analysis: string;
   matched_keywords: string[];
   missing_keywords: string[];
   hard_skills_matched: string[];
@@ -76,6 +78,9 @@ export function scoreResume(
     ...missingIndustryTerms,
   ];
 
+  const experienceYearsFound = extractYearsOfExperience(resumeText);
+  const experienceYearsRequired = extractYearsRequired(jobDescription);
+  
   const keywordScore = calculateKeywordScore(
     allMatchedKeywords,
     jdKeywords.hardSkills,
@@ -90,27 +95,31 @@ export function scoreResume(
     matchedSoftSkills,
     jdKeywords.softSkills
   );
-  const experienceScore = calculateExperienceScore(resumeText, jobDescription);
+  const experienceScore = calculateExperienceScore(experienceYearsFound, experienceYearsRequired);
+  const impactScore = calculateImpactScore(resumeText);
+  const readabilityScore = calculateReadabilityScore(resumeText);
 
+  // Elite Weighted Score: Metrics and Experience carry significant weight
   const overallScore = Math.round(
-    keywordScore * 0.4 +
-      formatScore * 0.25 +
-      skillsScore * 0.2 +
-      experienceScore * 0.15
+    keywordScore * 0.35 +
+      formatScore * 0.20 +
+      skillsScore * 0.15 +
+      experienceScore * 0.15 +
+      impactScore * 0.15
   );
 
-  const issues = detectATSIssues(resumeText);
+  const keywordDensity = calculateKeywordDensity(resumeText, allMatchedKeywords);
+  const issues = detectATSIssues(resumeText, keywordDensity, experienceYearsFound, experienceYearsRequired, impactScore);
+  
   const suggestions = generateSuggestions(
     allMissingKeywords,
     issues,
     formatScore,
     keywordScore,
     skillsScore,
-    experienceScore
+    experienceScore,
+    impactScore
   );
-
-  const experienceYearsFound = extractYearsOfExperience(resumeText);
-  const experienceYearsRequired = extractYearsRequired(jobDescription);
 
   return {
     overall_score: Math.min(100, Math.max(0, overallScore)),
@@ -118,42 +127,48 @@ export function scoreResume(
     format_score: formatScore,
     skills_score: skillsScore,
     experience_score: experienceScore,
-    matched_keywords: allMatchedKeywords.slice(0, 30),
-    missing_keywords: allMissingKeywords.slice(0, 20),
-    hard_skills_matched: matchedHardSkills,
-    hard_skills_missing: missingHardSkills,
-    soft_skills_matched: matchedSoftSkills,
+    impact_score: impactScore,
+    readability_analysis: getReadabilityAnalysis(readabilityScore),
+    matched_keywords: [...new Set(allMatchedKeywords)].slice(0, 30),
+    missing_keywords: [...new Set(allMissingKeywords)].slice(0, 20),
+    hard_skills_matched: [...new Set(matchedHardSkills)],
+    hard_skills_missing: [...new Set(missingHardSkills)],
+    soft_skills_matched: [...new Set(matchedSoftSkills)],
     ats_issues: issues,
     suggestions,
     experience_years_found: experienceYearsFound,
     experience_years_required: experienceYearsRequired,
     keyword_density: calculateKeywordDensity(resumeText, allMatchedKeywords),
-    readability_score: calculateReadabilityScore(resumeText),
+    readability_score: readabilityScore,
   };
 }
 
+function getReadabilityAnalysis(score: number): string {
+  if (score >= 90) return "Very Easy to Read (11yr old)";
+  if (score >= 80) return "Easy (12yr old)";
+  if (score >= 70) return "Fairly Easy";
+  if (score >= 60) return "Standard Professional";
+  if (score >= 50) return "Fairly Difficult (High School)";
+  if (score >= 30) return "Difficult (College Level)";
+  return "Very Difficult (Post-Grad)";
+}
+
 function extractKeywords(text: string) {
-  const words = text
-    .toLowerCase()
-    .replace(/[^\w\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 2 && !STOPWORDS.has(w));
+  const normalizedText = text.toLowerCase();
+  const escapeRegExp = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  const uniqueWords = [...new Set(words)];
+  const matchSet = (library: string[]) => {
+    return library.filter((item) => {
+      const regex = new RegExp(`\\b${escapeRegExp(item.toLowerCase())}\\b`, "i");
+      return regex.test(normalizedText);
+    });
+  };
 
-  const hardSkills = HARD_SKILLS.filter((skill) =>
-    uniqueWords.some((w) => skill.toLowerCase().includes(w) || w.includes(skill.toLowerCase()))
-  );
-
-  const softSkills = SOFT_SKILLS.filter((skill) =>
-    uniqueWords.some((w) => skill.toLowerCase().includes(w) || w.includes(skill.toLowerCase()))
-  );
-
-  const industryTerms = INDUSTRY_KEYWORDS.filter((term) =>
-    uniqueWords.some((w) => term.toLowerCase().includes(w) || w.includes(term.toLowerCase()))
-  );
-
-  return { hardSkills, softSkills, industryTerms };
+  return {
+    hardSkills: matchSet(HARD_SKILLS),
+    softSkills: matchSet(SOFT_SKILLS),
+    industryTerms: matchSet(INDUSTRY_KEYWORDS),
+  };
 }
 
 function calculateKeywordScore(
@@ -245,27 +260,65 @@ function calculateSkillsScore(
   return Math.round((hardScore * 0.7 + softScore * 0.3));
 }
 
-function calculateExperienceScore(resumeText: string, jobDescription: string): number {
-  const yearsFound = extractYearsOfExperience(resumeText);
-  const yearsRequired = extractYearsRequired(jobDescription);
+function calculateExperienceScore(yearsFound: number | null, yearsRequired: number | null): number {
+  if (yearsRequired === null) return 85; 
+  if (yearsFound === null) return 40;
 
-  if (yearsRequired === null) return 80;
-  if (yearsFound === null) return 50;
+  // Exact or Close Match (Perfect Seniority)
+  if (yearsFound >= yearsRequired && yearsFound <= yearsRequired + 3) {
+    return 100;
+  }
 
-  if (yearsFound >= yearsRequired) return 100;
-  return Math.round((yearsFound / yearsRequired) * 100);
+  // THE SENIORITY WALL (Gating logic)
+  // If a role is Junior (1-3 yrs) and candidate is Senior (8+ yrs), it is a MISMATCH.
+  if (yearsRequired <= 3 && yearsFound >= 8) {
+    return 60; // Flag as Risk: Overqualified
+  }
+
+  // Senior for Mid role
+  if (yearsRequired <= 5 && yearsFound >= 12) {
+    return 65;
+  }
+
+  // Over-qualified Match (Seniority Fit Penalty)
+  if (yearsFound > yearsRequired + 3) {
+    const diff = yearsFound - yearsRequired;
+    if (diff > 7) return 75; // Significantly overqualified
+    return 85; // Slightly overqualified
+  }
+
+  // Under-qualified Match
+  const ratio = yearsFound / yearsRequired;
+  return Math.round(ratio * 100);
+}
+
+function calculateImpactScore(text: string): number {
+  let score = 0;
+  
+  // KPI detection ($, %, metrics, numbers)
+  const metricsCount = (text.match(/\d+(%|x|k|m|b|\s?users?|\s?customers?|\s?revenue)/gi) || []).length;
+  const growthTerms = (text.match(/\b(increased|decreased|improved|optimized|automated|grew|scaled|reduced|saved|achieved)\b/gi) || []).length;
+  const currencyMatch = (text.match(/[\$£€¥]\d+/g) || []).length;
+
+  score += Math.min(metricsCount * 15, 45); // Up to 45 pts for metrics
+  score += Math.min(growthTerms * 10, 40);  // Up to 40 pts for growth verbs
+  score += Math.min(currencyMatch * 15, 15); // Up to 15 pts for financial impact
+
+  return Math.min(100, score);
 }
 
 function extractYearsOfExperience(text: string): number | null {
   const patterns = [
-    /(\d+)\+?\s*years?\s*(?:of\s*)?experience/i,
-    /(?:over\s*)?(\d+)\+?\s*years?\s*(?:of\s*)?experience/i,
-    /experience[:\s]+(\d+)\+?\s*years?/i,
+    /(\d+)\s*\+\s*(?:yrs?|years?)/i,                // Matches "9 + yrs", "9+years"
+    /(\d+)\+?\s*(?:yrs?|years?)\s*(?:of\s*)?exp/i,  // Matches "9+ yrs", "9 years of exp"
+    /(?:over\s*)?(\d+)\+?\s*(?:yrs?|years?)\s*(?:of\s*)?exp/i,
+    /experience[:\s]+(\d+)\+?\s*(?:yrs?|years?)/i,
+    /(\d+\.?\d*)\s*(?:yrs?|years?)/i,               // Matches "9.5 years"
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match) return parseInt(match[1], 10);
+    if (match) return Math.min(parseFloat(match[1]), 30);
   }
 
   const dateRanges = text.match(/\d{4}\s*[-–]\s*(?:\d{4}|present|current)/gi) || [];
@@ -292,21 +345,97 @@ function extractYearsOfExperience(text: string): number | null {
 
 function extractYearsRequired(text: string): number | null {
   const patterns = [
-    /(\d+)\+?\s*years?\s*(?:of\s*)?experience/i,
-    /minimum\s*(?:of\s*)?(\d+)\+?\s*years?/i,
-    /at\s*least\s*(\d+)\s*years?/i,
+    // Range detection: "1 to 2 years", "3-5 years"
+    /(\d+)\s*(?:to|-)\s*(\d+)\s*(?:yrs?|years?)\s*(?:(?:of\s*)?(?:exp|experience))?/i,
+    /(\d+)\+?\s*(?:yrs?|years?)\s*(?:of\s*)?experience/i,
+    /minimum\s*(?:of\s*)?(?:\d+)?\s*(\d+)\+?\s*(?:yrs?|years?)/i,
+    /at\s*least\s*(\d+)\s*(?:yrs?|years?)/i,
+    /req(?:uire)?\s*(\d+)\s*(?:yrs?|years?)/i,         // Matches "req 2 years"
+    /(\d+)\s*(?:yrs?|years?)\s*exp/i,                  // Matches "2 years exp"
   ];
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
-    if (match) return parseInt(match[1], 10);
+    if (match) {
+      // If it's a range, take the bottom of the range as the requirement
+      return parseInt(match[1], 10);
+    }
   }
 
   return null;
 }
 
-function detectATSIssues(text: string): string[] {
+const BUZZWORDS = [
+  "team player", "hard worker", "self-starter", "fast learner", "people person", 
+  "dedicated", "dependable", "passionate", "dynamic", "ambitious",
+  "results-oriented", "results-driven", "strategic thinker", "innovative", 
+  "adding value", "go-getter", "thought leader", "synergize", "creative problem solver"
+];
+
+const WEAK_VERBS = [
+  "helped", "assisted", "handled", "worked on", "responsible for", "participated", "involved with"
+];
+
+const STANDARD_HEADERS = [
+  "work experience", "professional experience", "employment history", "experience",
+  "education", "academic background", "academic history",
+  "skills", "technical skills", "technologies", "core competencies",
+  "projects", "personal projects", "portfolio",
+  "summary", "professional summary", "profile", "about me", "objective"
+];
+
+function detectATSIssues(
+  text: string, 
+  keywordDensity: number, 
+  yearsFound: number | null, 
+  yearsRequired: number | null,
+  impactScore: number
+): string[] {
   const issues: string[] = [];
+  const normalized = text.toLowerCase();
+
+  // Keyword Stuffing Detection
+  if (keywordDensity > 12) {
+    issues.push("Keyword density is too high (>12%) - may be flagged as spam by modern ATS");
+  }
+
+  // Buzzword/Fluff Detection
+  const foundBuzzwords = BUZZWORDS.filter(word => normalized.includes(word));
+  if (foundBuzzwords.length > 3) {
+    issues.push(`Too many buzzwords detected (${foundBuzzwords.slice(0, 3).join(", ")}) - replace with quantifiable results`);
+  }
+
+  // Weak Verb Detection
+  const foundWeakVerbs = WEAK_VERBS.filter(verb => normalized.includes(verb));
+  if (foundWeakVerbs.length > 2) {
+    issues.push("Passive / Weak verbs detected - replace with active power verbs (e.g., 'Orchestrated', 'Optimized')");
+  }
+
+  // Section Header Validation
+  const hasStandardHeaders = STANDARD_HEADERS.some(header => normalized.includes(header));
+  if (!hasStandardHeaders) {
+    issues.push("Non-standard section headers detected - use standard titles like 'Work Experience' for reliable parsing");
+  }
+
+  // The One-Page Rule (US/Canada Standard)
+  const wordCount = text.split(/\s+/).filter((w) => w.length > 0).length;
+  if (wordCount > 1000) {
+    issues.push("Extreme Page Length detected (likely 3+ pages) - US/Canada recruiters strongly prefer 1-2 pages");
+  } else if (wordCount > 750) {
+    issues.push("Resume length is borderline - aim for a concise 2-page limit");
+  }
+
+  // Seniority Fit Check
+  if (yearsFound !== null && yearsRequired !== null) {
+    if (yearsFound > yearsRequired + 5) {
+      issues.push("Potential Over-qualification detected for this seniority level");
+    }
+  }
+
+  // Impact/KPI Check
+  if (impactScore < 30) {
+    issues.push("Low impact metrics - try to quantify your achievements with numbers and percentages");
+  }
 
   if (/<table|<tr|<td/i.test(text)) {
     issues.push("Tables detected - ATS may not parse table data correctly");
@@ -320,11 +449,11 @@ function detectATSIssues(text: string): string[] {
   if (/[\u{1F600}-\u{1F6FF}]/u.test(text)) {
     issues.push("Emojis detected - some ATS systems struggle with special characters");
   }
-  if (text.length < 300) {
+  if (wordCount < 300) {
     issues.push("Resume is too short - aim for at least 500 words");
   }
-  if (text.length > 2000) {
-    issues.push("Resume is very long - consider trimming to 1-2 pages");
+  if (wordCount > 1200) {
+    issues.push("Resume is exceptionally long - this is a high risk for North American recruiter rejection");
   }
 
   const inconsistentDates = text.match(/\d{1,2}\/\d{4}/g);
@@ -342,7 +471,8 @@ function generateSuggestions(
   formatScore: number,
   keywordScore: number,
   skillsScore: number,
-  experienceScore: number
+  experienceScore: number,
+  impactScore: number
 ): { high_priority: string[]; medium_priority: string[]; low_priority: string[] } {
   const highPriority: string[] = [];
   const mediumPriority: string[] = [];
@@ -358,38 +488,31 @@ function generateSuggestions(
     );
   }
 
-  if (formatScore < 60) {
-    highPriority.push("Fix formatting issues - remove tables, headers/footers, and images");
-    highPriority.push("Ensure consistent date formats throughout");
-  }
-
-  if (skillsScore < 50) {
-    highPriority.push("Add a dedicated skills section with keywords from the job description");
-  }
-
-  if (experienceScore < 50) {
-    mediumPriority.push("Quantify your achievements with specific numbers and percentages");
-  }
-
-  if (keywordScore < 40) {
-    mediumPriority.push("Include more relevant keywords from the job description naturally");
+  if (impactScore < 40) {
+    highPriority.push("Quantify achievements: Use the formula [Action Verb] + [Context] + [Metric].");
   }
 
   issues.forEach((issue) => {
-    if (issue.includes("short")) {
-      mediumPriority.push("Add more details to your experience bullets (aim for 3-5 per role)");
+    if (issue.includes("Weak verbs")) {
+      highPriority.push("Replace weak verbs (Helped, Assisted) with Power Verbs (Architected, Scaled, Spearheaded).");
     }
-    if (issue.includes("long")) {
-      mediumPriority.push("Condense your resume to 1-2 pages maximum");
+    if (issue.includes("Non-standard section headers")) {
+      mediumPriority.push("Use standard headers: 'Work Experience', 'Skills', and 'Education'.");
+    }
+    if (issue.includes("buzzwords")) {
+      mediumPriority.push("Remove personality fluff (Team player, Dedicated) and replace with evidence-based bullet points.");
+    }
+    if (issue.includes("Over-qualification")) {
+      lowPriority.push("Emphasize leadership or mentorship if applying for roles below your current seniority.");
     }
   });
 
-  mediumPriority.push("Use strong action verbs (Led, Built, Increased, Decreased, Achieved)");
-  mediumPriority.push("Tailor your professional summary for this specific role");
+  if (formatScore < 60) {
+    highPriority.push("Fix ATS formatting: Remove tables, columns, and images to ensure 100% parse rate.");
+  }
 
-  lowPriority.push("Consider adding metrics to every bullet point where applicable");
-  lowPriority.push("Ensure your most relevant experience appears first");
-  lowPriority.push("Review for any spelling or grammar errors");
+  mediumPriority.push("Use strong action verbs (Led, Managed, Engineered, Scaled)");
+  lowPriority.push("Ensure consistent date formats throughout (e.g., Jan 2024)");
 
   return {
     high_priority: highPriority.slice(0, 3),
@@ -437,6 +560,7 @@ function countSyllables(word: string): number {
 }
 
 const HARD_SKILLS = [
+  // TECH (Legacy + Modern)
   "react", "vue", "angular", "node.js", "nodejs", "python", "java", "c++", "c#",
   "javascript", "typescript", "html", "css", "sql", "mysql", "postgresql", "mongodb",
   "redis", "elasticsearch", "docker", "kubernetes", "aws", "azure", "gcp", "google cloud",
@@ -450,27 +574,41 @@ const HARD_SKILLS = [
   "rust", "go", "golang", "php", "laravel", "ruby", "rails", "django", "flask",
   "spring", ".net", "asp.net", "express", "next.js", "nuxt", "gatsby", "graphql",
   "prisma", "sequelize", "typeorm", "nginx", "apache", "tomcat", "jenkins", "circleci",
-  "github actions", "bitbucket", "jira", "confluence", "salesforce", "sap", "oracle",
-  "salesforce crm", "hubspot", "marketing cloud", "seo", "sem", "google ads", "facebook ads",
-  "analytics", "google analytics", "firebase", "supabase", "stripe",
-  "payment gateway", "blockchain", "solidity", "web3", "ethereum", "smart contracts",
-  "networking", "tcp/ip", "dns", "vpn", "firewall", "security", "cybersecurity",
-  "penetration testing", "ethical hacking", "iso 27001", "soc2", "gdpr", "data privacy",
-  "project management", "product management", "business analysis", "requirements gathering",
-  "uml", "bpmn", "process modeling", "erp", "crm", "salesforce", "zendesk",
-  "copywriting", "content writing", "technical writing", "editing", "proofreading",
-  "social media", "community management", "influencer marketing", "email marketing",
-  "marketing automation", "lead generation", "conversion optimization", "ab testing",
-  "financial modeling", "valuation", "excel modeling", "accounting", "taxation",
-  "auditing", "risk management", "compliance", "regulatory", "investment banking",
-  "private equity", "venture capital", "fund management", "portfolio management",
-  "trading", "derivatives", "fixed income", "equity research", "credit analysis",
-  "supply chain", "logistics", "inventory management", "procurement", "vendor management",
-  "lean manufacturing", "six sigma", "quality assurance", "iso", "process improvement",
-  "testing", "qa", "automation testing", "selenium", "cypress", "jest", "mocha",
-  "junit", "testng", "load testing", "performance testing", "api testing", "postman",
-  "crm", "dynamics", "zoho", "freshsales", "pipeline", "forecasting", "territory management",
-  "account management", "client relations", "stakeholder management", "executive presence",
+  "github actions", "bitbucket", "jira", "confluence",
+  
+  // SALES (Elite 2026)
+  "Salesforce", "HubSpot", "CRM Management", "Pipeline Management", "Forecast Accuracy",
+  "Consultative Selling", "B2B Sales", "SaaS Sales", "Enterprise Sales", "MEDDIC",
+  "Challenger Sale", "Lead Generation", "Sales Enablement", "Quota Attainment",
+  "Business Development", "Account Management", "Strategic Partnerships",
+  "Negotiation", "Objection Handling", "Closing", "Cold Calling", "Social Selling",
+  
+  // MARKETING (Elite 2026)
+  "Go-To-Market", "GTM Strategy", "Marketing Automation", "GA4", "Google Analytics",
+  "GTM", "Google Tag Manager", "SEO", "Search Engine Optimization", "PPC", "Google Ads",
+  "Performance Marketing", "Content Strategy", "Email Marketing", "CRO", "Conversion Rate Optimization",
+  "Brand Positioning", "Campaign Management", "Attribution Modeling", "A/B Testing",
+  "Customer Lifecycle", "Lead Nurturing", "Social Media Marketing", "Influencer Marketing",
+  
+  // FINANCE & OPS (Elite 2026)
+  "Financial Analysis", "P&L Management", "Profit and Loss", "Forecasting", "Budgeting",
+  "GAAP", "SOX Compliance", "FP&A", "Financial Planning & Analysis", "Cash Flow",
+  "Financial Modeling", "Valuation", "Auditing", "Internal Audit", "Corporate Finance",
+  "Risk Management", "Capital Budgeting", "M&A", "Mergers and Acquisitions",
+  "Revenue Operations", "RevOps", "Unit Economics", "LTV/CAC", "ARR", "MRR",
+  
+  // GENERAL CORPORATE / MANAGEMENT
+  "Project Management", "Product Management", "Stakeholder Management", "Operations",
+  "Supply Chain", "Procurement", "Vendor Management", "Compliance", "Regulatory",
+  "Strategic Planning", "Change Management", "Business Insights", "ROI Analysis",
+  "Process Improvement", "Lean Six Sigma", "Operational Excellence",
+
+  // SENIORITY & ARCHITECTURE
+  "HLD", "LLD", "System Design", "Docker Support", "Containerization", "Orchestration",
+  "Terraform", "Ansible", "IaC", "CI/CD Pipelines", "Refactoring", "Code Reviews",
+  "Mentoring", "System Architecture", "Micro-services", "Event-driven", "Serverless",
+  "CQRS", "DDD", "TDD", "Unit Testing", "Integration Testing", "Clean Code", "SOLID",
+  "Technical Debt", "Legacy Migration", "High Availability", "Scalability", "Bottlenecks",
 ];
 
 const SOFT_SKILLS = [

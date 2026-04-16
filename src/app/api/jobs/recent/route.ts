@@ -66,94 +66,127 @@ function normalizeTheirStackJob(raw: TheirStackJob): ExternalJob {
 
 // ─── Mock jobs for when API key is missing ────────────────────────────────────
 
-function getMockJobs(location: string, skills: string[]): ExternalJob[] {
-  return [
+// ─── Elite Mock jobs with Global reach ────────────────────────────────────────
+
+function getEliteMockJobs(location: string, userSkills: string[] = []): ExternalJob[] {
+  const allMocks: ExternalJob[] = [
     {
-      id: "mock-1",
-      title: "Senior Full Stack Engineer",
-      company: "Revolut",
-      location: location,
+      id: "elite-1",
+      title: "Staff Product Engineer (AI)",
+      company: "Vercel",
+      location: "San Francisco, CA (Remote)",
       is_remote: true,
-      job_type: "full_time",
-      salary_min: 90000,
-      salary_max: 130000,
+      salary_min: 180000,
+      salary_max: 250000,
       salary_currency: "USD",
-      description: "We are looking for a Senior Full Stack Engineer to join our growing team. You will work on high-scale financial products used by 30M+ customers. Strong Next.js, TypeScript, and PostgreSQL skills required.",
-      required_skills: skills.length > 0 ? skills.slice(0, 5) : ["Next.js", "TypeScript", "PostgreSQL", "React", "Node.js"],
-      url: "https://careers.revolut.com",
+      description: "Join the team building the future of the web. Work on AI-native developer tools, Next.js core, and high-performance edge infrastructure. Looking for engineers who bridge the gap between AI research and product reality.",
+      required_skills: ["Next.js", "TypeScript", "OpenAI", "React", "Rust", "Edge Functions"],
+      url: "https://vercel.com/jobs",
       source: "mock",
-      posted_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      match_score: 78,
+      posted_at: new Date().toISOString(),
     },
     {
-      id: "mock-2",
-      title: "Frontend Engineer – AI Products",
-      company: "Mistral AI",
-      location: "Paris, France",
+      id: "elite-2",
+      title: "Senior Frontend Architect",
+      company: "Linear",
+      location: "London, UK (Remote)",
       is_remote: true,
-      job_type: "full_time",
-      salary_min: 80000,
-      salary_max: 120000,
-      salary_currency: "EUR",
-      description: "Shape the future of AI interfaces. You'll build beautiful, performant UIs for our LLM products. We value engineers who care deeply about UX and performance.",
-      required_skills: ["React", "TypeScript", "Tailwind CSS", "Framer Motion", "REST APIs"],
-      url: "https://mistral.ai/careers",
-      source: "mock",
-      posted_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      match_score: 65,
-    },
-    {
-      id: "mock-3",
-      title: "Backend Engineer – Platform",
-      company: "Stripe",
-      location: "Dublin, Ireland",
-      is_remote: false,
-      job_type: "full_time",
       salary_min: 120000,
       salary_max: 180000,
+      salary_currency: "GBP",
+      description: "Linear is built on a foundation of craft and speed. You will lead the development of our high-performance desktop and mobile web clients. Experience with complex state management and fluid animations is essential.",
+      required_skills: ["React", "TypeScript", "WASM", "Web Audio", "Framer Motion", "SQLite"],
+      url: "https://linear.app/jobs",
+      source: "mock",
+      posted_at: new Date(Date.now() - 3600000).toISOString(),
+    },
+    {
+      id: "elite-3",
+      title: "Founding AI Engineer",
+      company: "Perplexity AI",
+      location: "New York, NY",
+      is_remote: false,
+      salary_min: 200000,
+      salary_max: 300000,
+      salary_currency: "USD",
+      description: "We are reimagining search. You will build core indexing and retrieval systems that power the world's most advanced answer engine. Deep knowledge of LLMs, vector DBs, and search ranking is required.",
+      required_skills: ["Python", "PyTorch", "Pinecone", "ElasticSearch", "LLMs", "FastAPI"],
+      url: "https://perplexity.ai/jobs",
+      source: "mock",
+      posted_at: new Date(Date.now() - 7200000).toISOString(),
+    },
+    {
+      id: "elite-4",
+      title: "Full Stack Lead (Fintech)",
+      company: "Revolut",
+      location: "Berlin, Germany",
+      is_remote: true,
+      salary_min: 90000,
+      salary_max: 140000,
       salary_currency: "EUR",
-      description: "Stripe's Platform team builds the infrastructure that powers global payments for millions of businesses. You'll work on distributed systems, APIs, and developer tools.",
-      required_skills: ["Go", "PostgreSQL", "Redis", "Kafka", "Kubernetes", "gRPC"],
+      description: "Scale financial services for 40M+ users. Lead a squad responsible for our Core Banking platform. Next-gen technology stack and high-velocity shipping culture.",
+      required_skills: ["Java", "Kotlin", "React", "PostgreSQL", "Kafka", "Docker"],
+      url: "https://revolut.com/jobs",
+      source: "mock",
+      posted_at: new Date(Date.now() - 86400000).toISOString(),
+    },
+    {
+      id: "elite-5",
+      title: "Senior UI/UX Engineer",
+      company: "Stripe",
+      location: "Bangalore, India",
+      is_remote: true,
+      salary_min: 6000000,
+      salary_max: 9000000,
+      salary_currency: "INR",
+      description: "Build the interfaces that move billions of dollars. You care about every pixel, every frame of animation, and the overall developer experience of Stripe's Dashboard.",
+      required_skills: ["React", "TypeScript", "D3.js", "Design Systems", "Tailwind CSS"],
       url: "https://stripe.com/jobs",
       source: "mock",
-      posted_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      match_score: 52,
-    },
-    {
-      id: "mock-4",
-      title: "AI/ML Engineer",
-      company: "DeepMind",
-      location: "London, UK",
-      is_remote: false,
-      job_type: "full_time",
-      salary_min: 100000,
-      salary_max: 160000,
-      salary_currency: "GBP",
-      description: "Join DeepMind's Applied AI team. You'll implement and optimize ML models for real-world deployment. Strong Python, PyTorch, and production ML experience required.",
-      required_skills: ["Python", "PyTorch", "TensorFlow", "MLOps", "CUDA", "LLMs"],
-      url: "https://deepmind.google/careers",
-      source: "mock",
-      posted_at: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-      match_score: 41,
-    },
-    {
-      id: "mock-5",
-      title: "Full Stack Developer – SaaS",
-      company: "Shopify",
-      location: location,
-      is_remote: true,
-      job_type: "remote",
-      salary_min: 100000,
-      salary_max: 140000,
-      salary_currency: "CAD",
-      description: "Build commerce experiences for millions of merchants. You'll work on our storefront and checkout APIs, partner integrations, and internal tooling.",
-      required_skills: ["Ruby on Rails", "React", "GraphQL", "TypeScript", "MySQL"],
-      url: "https://shopify.com/careers",
-      source: "mock",
-      posted_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-      match_score: 70,
-    },
+      posted_at: new Date(Date.now() - 43200000).toISOString(),
+    }
   ];
+
+  // Elite Scoring Logic: Real-time keyword cross-match simulation
+  return allMocks.map(job => {
+    let score = 0;
+    const reasons: { factor: string; impact: string; detail: string }[] = [];
+    const matchedSkills = job.required_skills.filter(s => 
+      userSkills.map(us => us.toLowerCase()).includes(s.toLowerCase())
+    );
+
+    // Dynamic base score calculation
+    if (matchedSkills.length > 0) {
+      score = 40 + (matchedSkills.length / job.required_skills.length) * 50;
+      reasons.push({
+        factor: "Skills Match",
+        impact: "High",
+        detail: `You have ${matchedSkills.length} core technologies required for this role: ${matchedSkills.join(", ")}.`
+      });
+    } else {
+      score = 25 + Math.random() * 15;
+      reasons.push({
+        factor: "Potential Alignment",
+        impact: "Medium",
+        detail: "Based on your general profile, you exhibit foundational alignment with the role's seniority level."
+      });
+    }
+
+    if (job.is_remote) {
+      score += 5;
+      reasons.push({
+        factor: "Geography",
+        impact: "Positive",
+        detail: "Remote-first position matches your preferred work-from-anywhere flexibility."
+      });
+    }
+
+    return {
+      ...job,
+      match_score: Math.min(Math.round(score), 100),
+      match_reasons: reasons
+    };
+  });
 }
 
 // ─── TheirStack API call ──────────────────────────────────────────────────────
@@ -165,8 +198,8 @@ async function fetchFromTheirStack(
 ): Promise<ExternalJob[]> {
   const apiKey = process.env.THEIRSTACK_API_KEY;
   if (!apiKey) {
-    console.log("[jobs/recent] No THEIRSTACK_API_KEY — using mock data");
-    return getMockJobs(location, skills);
+    console.log("[jobs/recent] No THEIRSTACK_API_KEY — using elite mock engine");
+    return getEliteMockJobs(location, skills);
   }
 
   try {

@@ -13,11 +13,11 @@ export default function VerifyEmailPage({
       {/* Header */}
       <header className="border-b border-white/5">
         <div className="container flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">S</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-9 h-9 rounded-xl bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/20 group-hover:scale-110 transition-transform">
+              <span className="text-white font-black text-xl leading-none">V</span>
             </div>
-            <span className="font-heading font-bold text-xl text-white">VELSEAI</span>
+            <span className="font-heading font-black text-xl text-white tracking-tighter">VELSEAI</span>
           </Link>
         </div>
       </header>

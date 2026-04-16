@@ -12,6 +12,7 @@ import {
   Language,
   Achievement,
 } from "@/types/resume";
+import { FinalAnalysis, ResumeFixResult } from "@/lib/ai/structured-outputs";
 
 interface ResumeState {
   resumeId: string | null;
@@ -23,10 +24,31 @@ interface ResumeState {
   history: ResumeContent[];
   historyIndex: number;
 
+  // Analysis State
+  analysisResults: FinalAnalysis | null;
+  lastAnalyzed: Date | null;
+
+  // One-Click Fix Engine State
+  pendingFixes: ResumeFixResult | null;
+  isApplyingFixes: boolean;
+
+  // Job Description (shared between JDMatcher and FixAllBanner)
+  jobDescription: string;
+
   setResumeId: (id: string) => void;
   setTitle: (title: string) => void;
   setContent: (content: Partial<ResumeContent>) => void;
   updatePersonalInfo: (info: Partial<PersonalInfo>) => void;
+
+  setAnalysisResults: (results: FinalAnalysis) => void;
+
+  // One-Click Fix Engine Actions
+  setPendingFixes: (fixes: ResumeFixResult | null) => void;
+  applyBulletFix: (expId: string, bulletIdx: number, newBullet: string) => void;
+  applyAllFixes: (fixes: ResumeFixResult) => void;
+
+  // Job Description
+  setJobDescription: (jd: string) => void;
 
   addExperience: () => void;
   updateExperience: (id: string, experience: Partial<WorkExperience>) => void;
@@ -81,6 +103,11 @@ export const useResumeStore = create<ResumeState>()(
     lastSaved: null,
     history: [DEFAULT_RESUME_CONTENT],
     historyIndex: 0,
+    analysisResults: null,
+    lastAnalyzed: null,
+    pendingFixes: null,
+    isApplyingFixes: false,
+    jobDescription: "",
 
     setResumeId: (id) =>
       set((state) => {
@@ -91,6 +118,67 @@ export const useResumeStore = create<ResumeState>()(
       set((state) => {
         state.title = title;
         state.isDirty = true;
+      }),
+
+    setAnalysisResults: (results) =>
+      set((state) => {
+        state.analysisResults = results;
+        state.lastAnalyzed = new Date();
+      }),
+
+    setJobDescription: (jd) =>
+      set((state) => {
+        state.jobDescription = jd;
+      }),
+
+    setPendingFixes: (fixes) =>
+      set((state) => {
+        state.pendingFixes = fixes;
+      }),
+
+    // Replace a single bullet in-place. Used by per-bullet "Fix This" buttons.
+    applyBulletFix: (expId, bulletIdx, newBullet) =>
+      set((state) => {
+        const exp = state.content.experience.find((e) => e.id === expId);
+        if (exp && exp.bulletPoints[bulletIdx] !== undefined) {
+          exp.bulletPoints[bulletIdx] = newBullet;
+          state.isDirty = true;
+        }
+      }),
+
+    // Batch-apply all fixes from a full ResumeFixResult (GPT-4o output).
+    // Matches bullets by their original text and replaces with rewritten version.
+    applyAllFixes: (fixes) =>
+      set((state) => {
+        state.isApplyingFixes = true;
+
+        // 1. Apply improved summary
+        if (fixes.improved_summary) {
+          state.content.personal.summary = fixes.improved_summary;
+        }
+
+        // 2. Apply bullet rewrites across all experience entries
+        fixes.sections.forEach((section) => {
+          if (section.section === "experience" && section.bullets) {
+            section.bullets.forEach((bulletFix) => {
+              // Find the bullet by matching original text (trim for safety)
+              const originalTrimmed = bulletFix.original.trim();
+              for (const exp of state.content.experience) {
+                const idx = exp.bulletPoints.findIndex(
+                  (b) => b.trim() === originalTrimmed
+                );
+                if (idx !== -1) {
+                  exp.bulletPoints[idx] = bulletFix.rewritten;
+                  break;
+                }
+              }
+            });
+          }
+        });
+
+        state.isDirty = true;
+        state.isApplyingFixes = false;
+        state.pendingFixes = null;
       }),
 
     setContent: (content) =>

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import OpenAI from "openai";
+import { generateStructuredJSON } from "@/lib/ai";
 import * as Sentry from "@sentry/nextjs";
 import { getATSResumeFixPrompt } from "@/lib/ai/prompts";
-import { captureServerEvent } from "@/lib/analytics/posthog";
+import { captureServerEvent } from "@/lib/analytics/posthog.server";
+import { generateWithGroq } from "@/lib/ai/groq";
 
 /**
  * POST /api/ai/fix-resume
@@ -17,18 +18,40 @@ import { captureServerEvent } from "@/lib/analytics/posthog";
  * - WhatsApp bot (after JD extraction, to generate tailored PDF)
  */
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 
 const schema = z.object({
+  mode: z.enum(["single_bullet", "full_resume"]).optional().default("full_resume"),
+  // single_bullet mode fields
+  bulletText: z.string().optional(),
+  bulletContext: z.string().optional(), // "Role: SWE at Google. Focus on impact."
+  // full_resume mode fields
   resumeId: z.string().uuid().optional(),
   resumeJson: z.record(z.string(), z.unknown()).optional(),
   resumeText: z.string().optional(),
-  jobDescription: z.string().min(50, "Job description too short"),
+  jobDescription: z.string().optional(),
   missingKeywords: z.array(z.string()).optional(),
   currentScore: z.number().int().min(0).max(100).optional().default(0),
   locale: z.string().optional().default("en"),
   returnPdf: z.boolean().optional().default(false),
   userId: z.string().uuid().optional(),
+});
+
+const ResumeFixResultSchema = z.object({
+  improved_summary: z.string(),
+  sections: z.array(z.object({
+    section: z.string(),
+    rewritten_content: z.string().optional().default("NA"),
+    bullets: z.array(z.object({
+      original: z.string(),
+      rewritten: z.string(),
+      improvement_reason: z.string(),
+      keywords_added: z.array(z.string())
+    })).optional()
+  })),
+  keywords_added: z.array(z.string()),
+  estimated_new_score: z.number().int().min(0).max(100),
+  changes_count: z.number().int().min(0)
 });
 
 export async function POST(request: NextRequest) {
@@ -46,8 +69,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { resumeId, jobDescription, missingKeywords, currentScore, locale, returnPdf } = parsed.data;
+    const { mode, resumeId, jobDescription, missingKeywords, currentScore, locale, returnPdf } = parsed.data;
     const effectiveUserId = user?.id || parsed.data.userId;
+
+    // ── FAST PATH: Single Bullet Fix (Groq, ~300ms) ───────────────────────────
+    if (mode === "single_bullet") {
+      const { bulletText, bulletContext } = parsed.data;
+      if (!bulletText || bulletText.trim().length < 5) {
+        return NextResponse.json({ error: "bulletText is required for single_bullet mode" }, { status: 400 });
+      }
+
+      const bulletPrompt = `You are an elite resume writer. Rewrite this bullet point to be achievement-based, ATS-optimized, and start with a strong action verb.
+
+Context: ${bulletContext || "Professional role"}
+Original bullet: "${bulletText}"
+
+Rules:
+- Start with a strong action verb (Led, Built, Scaled, Reduced, Launched, Architected, Delivered)
+- Include a quantifiable metric if possible (%, $, count, or estimate with ~)
+- Max 2 lines. ATS-safe language. No buzzwords.
+- Do NOT invent facts. Only rephrase and strengthen what's given.
+
+Return ONLY valid JSON: { "rewritten": "the new bullet", "improvement": "one sentence explaining the key change" }`;
+
+      // Use Groq for speed if available, else standard orchestrator
+      let result = { rewritten: bulletText, improvement: "" };
+      try {
+        if (process.env.GROQ_API_KEY) {
+          const raw = await generateWithGroq(bulletPrompt, {
+            temperature: 0.3,
+            maxTokens: 300,
+            responseFormat: { type: "json_object" },
+          });
+          result = JSON.parse(raw);
+        } else {
+          result = await generateStructuredJSON<any>(bulletPrompt, {}, {
+            temperature: 0.3,
+            priority: "speed"
+          });
+        }
+      } catch (e) {
+        console.error("[fix-resume/single_bullet] AI error:", e);
+        return NextResponse.json({ error: "AI processing failed" }, { status: 500 });
+      }
+
+      // Track usage
+      if (effectiveUserId) {
+        await supabase.from("ai_usage").insert({
+          user_id: effectiveUserId,
+          feature: "fix_bullet",
+          model_used: process.env.GROQ_API_KEY ? "groq" : "gpt-4o-mini",
+          tokens_used: 0,
+        }).catch(() => {}); // non-fatal
+      }
+
+      return NextResponse.json({
+        success: true,
+        original: bulletText,
+        rewritten: result.rewritten || bulletText,
+        improvement: result.improvement || "",
+      });
+    }
+
+    // ── FULL RESUME MODE: Rate limiting check ─────────────────────────────────
+    if (!jobDescription || jobDescription.length < 50) {
+      return NextResponse.json(
+        { error: "jobDescription is required and must be at least 50 characters for full_resume mode" },
+        { status: 400 }
+      );
+    }
 
     // ── Rate limiting: check AI usage ─────────────────────────────────────────
     if (effectiveUserId) {
@@ -65,7 +155,7 @@ export async function POST(request: NextRequest) {
         .eq("id", effectiveUserId)
         .single();
 
-      const dailyLimit = profile?.plan === "free" ? 2 : profile?.plan === "starter" ? 10 : 999;
+      const dailyLimit = profile?.plan === "free" ? 10 : profile?.plan === "starter" ? 10 : 999;
 
       if ((count || 0) >= dailyLimit) {
         return NextResponse.json(
@@ -138,24 +228,19 @@ export async function POST(request: NextRequest) {
       locale,
     });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 3000,
-      response_format: { type: "json_object" },
-      temperature: 0.3, // Low temperature for consistent rewrites
+    // ── Unified Orchestrator: Fix Resume (Automatic Fallback Groq/OpenAI) ─────
+    const fixResult = await generateStructuredJSON<any>(prompt, ResumeFixResultSchema, {
+      temperature: 0.3,
+      priority: "speed" // Use Groq by default for high-speed synthesis
     });
-
-    const rawContent = completion.choices[0]?.message?.content || "{}";
-    const fixResult = JSON.parse(rawContent);
 
     // ── Track AI usage ────────────────────────────────────────────────────────
     if (effectiveUserId) {
       await supabase.from("ai_usage").insert({
         user_id: effectiveUserId,
         feature: "fix_resume",
-        model_used: "gpt-4o",
-        tokens_used: completion.usage?.total_tokens || 0,
+        model_used: process.env.GROQ_API_KEY ? "groq" : "openai",
+        tokens_used: 0,
       });
     }
 

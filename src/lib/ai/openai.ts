@@ -30,3 +30,30 @@ export async function generateWithOpenAI(
 
   return response.choices[0]?.message?.content?.trim() || "";
 }
+
+export async function generateStructuredWithOpenAI<T>(
+  prompt: string,
+  jsonSchema: Record<string, unknown>,
+  options?: {
+    model?: string;
+    temperature?: number;
+  }
+): Promise<T> {
+  const client = getOpenAIClient();
+
+  const response = await client.chat.completions.create({
+    model: options?.model || "gpt-4o-mini",
+    messages: [
+      { 
+        role: "system", 
+        content: "You are an elite ATS (Applicant Tracking System) Auditor. Analyze the resume with precision and return a strictly structured JSON response." 
+      },
+      { role: "user", content: prompt }
+    ],
+    temperature: options?.temperature ?? 0.3,
+    response_format: { type: "json_object" },
+  });
+
+  const content = response.choices[0]?.message?.content?.trim() || "{}";
+  return JSON.parse(content) as T;
+}

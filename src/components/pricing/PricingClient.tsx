@@ -29,26 +29,23 @@ interface PricingClientProps {
 }
 
 export function PricingClient({ plans, pricing, user }: PricingClientProps) {
-  const [billingCycle, setBillingCycle] = React.useState<"monthly" | "yearly">("monthly");
   const [isLoading, setIsLoading] = React.useState<string | null>(null);
 
   const handleSubscribe = async (plan: Plan) => {
     if (plan.id === "free") return;
 
     if (!user) {
-      window.location.href = `/auth/signup?plan=${plan.id}&billing=${billingCycle}`;
+      window.location.href = `/auth/signup?plan=${plan.id}`;
       return;
     }
 
     setIsLoading(plan.id);
     try {
-      const planKey = plan.id === "lifetime" ? "lifetime" : `${plan.id}_${billingCycle}`;
-      
       const response = await fetch("/api/payment/stripe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          planId: planKey,
+          planId: plan.id,
           currency: pricing.currency
         }),
       });
@@ -67,36 +64,12 @@ export function PricingClient({ plans, pricing, user }: PricingClientProps) {
 
   return (
     <div className="space-y-16">
-      {/* Billing Toggle */}
-      <div className="flex items-center justify-center gap-4">
-        <span className={cn("text-sm font-medium transition-colors", billingCycle === "monthly" ? "text-white" : "text-white/40")}>
-          Monthly
-        </span>
-        <button
-          onClick={() => setBillingCycle(billingCycle === "monthly" ? "yearly" : "monthly")}
-          className="relative w-14 h-7 bg-white/10 rounded-full border border-white/10 p-1 transition-colors hover:border-violet-500/50"
-        >
-          <div className={cn(
-            "absolute w-5 h-5 bg-violet-500 rounded-full transition-all duration-300 shadow-[0_0_10px_rgba(139,92,246,0.5)]",
-            billingCycle === "yearly" ? "translate-x-7" : "translate-x-0"
-          )} />
-        </button>
-        <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-medium transition-colors", billingCycle === "yearly" ? "text-white" : "text-white/40")}>
-            Yearly
-          </span>
-          <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-[10px] py-0 px-2 font-bold uppercase tracking-wider">
-            Save 30%
-          </Badge>
-        </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {plans.map((plan) => {
           const isLifetime = plan.id === "lifetime";
-          const displayPrice = isLifetime 
-            ? plan.price 
-            : billingCycle === "monthly" ? plan.price : plan.yearlyPrice;
+          const isSprint = plan.id === "sprint";
+          const displayPrice = plan.price;
           
           return (
             <Card key={plan.id} className={cn(
@@ -111,27 +84,22 @@ export function PricingClient({ plans, pricing, user }: PricingClientProps) {
                 </div>
               )}
               
-              <div className="p-6">
+              <div className="p-8">
                 <CardHeader className="text-center pb-4 p-0">
                   <CardTitle className="text-xl font-black text-white tracking-tight uppercase">{plan.name}</CardTitle>
-                  <div className="mt-6 flex flex-col items-center">
+                  <div className="mt-8 flex flex-col items-center">
                     <div className="flex items-baseline gap-1">
                       <span className="text-sm font-bold text-white/40 self-start mt-1.5">{pricing.symbol}</span>
-                      <span className="text-5xl font-black text-white tracking-tighter">{displayPrice}</span>
-                      {!isLifetime && plan.price > 0 && <span className="text-white/40 text-sm font-medium">/{billingCycle === "monthly" ? "mo" : "yr"}</span>}
+                      <span className="text-6xl font-black text-white tracking-tighter">{displayPrice}</span>
+                      {isSprint && <span className="text-white/40 text-sm font-medium">/30-days</span>}
                     </div>
-                    {billingCycle === "yearly" && plan.yearlySavings && !isLifetime && (
-                      <div className="text-[10px] font-bold text-emerald-400 mt-2 uppercase tracking-widest">
-                        Save {pricing.symbol}{plan.yearlySavings} per year
-                      </div>
-                    )}
                     {isLifetime && (
                       <div className="text-[10px] font-bold text-amber-400 mt-2 uppercase tracking-widest">
                         One-time payment
                       </div>
                     )}
                   </div>
-                  <p className="text-white/50 text-xs mt-4 leading-relaxed px-4">{plan.description}</p>
+                  <p className="text-white/50 text-xs mt-6 leading-relaxed px-4">{plan.description}</p>
                 </CardHeader>
 
                 <CardContent className="p-0 pt-8">

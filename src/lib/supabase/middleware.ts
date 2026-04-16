@@ -33,28 +33,38 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/auth");
-  const isPublicPage =
-    request.nextUrl.pathname === "/" ||
-    request.nextUrl.pathname.startsWith("/ats-checker") ||
-    request.nextUrl.pathname.startsWith("/pricing");
+  const pathname = request.nextUrl.pathname;
+  
+  // Locale detection: Matches /en, /en/, /en/path
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  const locale = localeMatch ? localeMatch[1] : 'en';
+  
+  // Strip locale for logic checks
+  const pathWithoutLocale = localeMatch 
+    ? pathname.replace(new RegExp(`^\\/${locale}`), '') || '/'
+    : pathname;
 
+  const isAuthPage = pathWithoutLocale.startsWith("/auth");
+  const isLandingPage = pathWithoutLocale === "/";
+  
   const isProtectedRoute =
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/resume") ||
-    request.nextUrl.pathname.startsWith("/jobs") ||
-    request.nextUrl.pathname.startsWith("/settings");
+    pathWithoutLocale.startsWith("/dashboard") ||
+    pathWithoutLocale.startsWith("/resume") ||
+    pathWithoutLocale.startsWith("/jobs") ||
+    pathWithoutLocale.startsWith("/settings");
 
+  // Rule 1: Redirect Guest from Protected Routes
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    url.searchParams.set("redirect", request.nextUrl.pathname);
+    url.pathname = `/${locale}/auth/login`;
+    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  // Rule 2: Redirect Authenticated from Auth/Landing Pages
+  if (user && (isAuthPage || isLandingPage)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = `/${locale}/dashboard`;
     return NextResponse.redirect(url);
   }
 

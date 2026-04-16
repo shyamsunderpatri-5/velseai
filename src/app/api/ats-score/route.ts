@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { scoreResume } from "@/lib/ats/scorer";
+import { analyzeResume } from "@/lib/ats/engine";
 import { createClient } from "@/lib/supabase/server";
-import { captureServerEvent } from "@/lib/analytics/posthog";
+import { captureServerEvent } from "@/lib/analytics/posthog.server";
 import * as Sentry from "@sentry/nextjs";
 import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
+import path from "path";
+import { pathToFileURL } from "url";
 
 const atsScoreSchema = z.object({
   resumeText: z.string().optional(),
@@ -25,10 +28,28 @@ async function extractTextFromFile(base64Data: string): Promise<string> {
   const buffer = Buffer.from(base64Content, "base64");
 
   if (mimeType === "application/pdf") {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const pdfParse = require("pdf-parse") as (buffer: Buffer) => Promise<{ text: string }>;
-    const data = await pdfParse(buffer);
-    return data.text;
+    try {
+      // Point PDF.js to the absolute file path of the worker script.
+      // On Windows, ESM requires absolute paths to be valid file:// URLs.
+      const workerPath = path.join(process.cwd(), "node_modules", "pdfjs-dist", "legacy", "build", "pdf.worker.mjs");
+      const workerURL = pathToFileURL(workerPath).href;
+      PDFParse.setWorker(workerURL);
+
+      const parser = new PDFParse({ data: buffer });
+      const result = await parser.getText();
+      
+      if (!result || !result.text) {
+        throw new Error("No text content found in PDF");
+      }
+      
+      // Always destroy to prevent memory leaks
+      await parser.destroy();
+      
+      return result.text;
+    } catch (pdfError) {
+      console.error("PDF Parsing error:", pdfError);
+      throw new Error(`PDF scan failed: ${pdfError instanceof Error ? pdfError.message : "Parsing error"}`);
+    }
   } else if (
     mimeType === "application/msword" ||
     mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -84,20 +105,22 @@ export async function POST(request: NextRequest) {
 
     let userId: string | null = null;
     let userPlan = "free";
+    let profile: any = null;
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
       userId = user?.id || null;
       
       if (userId) {
-        const { data: profile } = await supabase
+        const { data: profileData } = await supabase
           .from("profiles")
-          .select("plan, plan_expires_at")
+          .select("plan, plan_expires_at, full_name")
           .eq("id", userId)
           .single();
         
-        if (profile) {
-          userPlan = profile.plan || "free";
+        if (profileData) {
+          profile = profileData;
+          userPlan = profileData.plan || "free";
         }
       }
     } catch {
@@ -108,43 +131,49 @@ export async function POST(request: NextRequest) {
     const hasLifetimeAccess = userPlan === "lifetime";
     const canHaveUnlimited = isSubscribed || hasLifetimeAccess;
 
-    // FREE PLAN: 3 checks LIFETIME per IP address (not per day)
+    // FREE PLAN PROTOCOL
     if (!canHaveUnlimited) {
-      // Get or create IP-based record for LIFETIME tracking
+      // Get IP-based record for LIFETIME tracking
       const { data: ipData } = await supabase
         .from("anonymous_ats_checks")
-        .select("lifetime_checks")
+        .select("lifetime_checks, user_id")
         .eq("ip_address", userIp)
         .single();
 
       const lifetimeChecks = ipData?.lifetime_checks || 0;
+      
+      // Strict GATING: Guest (5) vs Account (20) - Increased for Development
+      const maxAllowed = userId ? 20 : 5;
 
-      if (lifetimeChecks >= 3) {
+      if (lifetimeChecks >= maxAllowed) {
         return NextResponse.json(
           {
-            error: "Free limit reached",
+            error: "Limit Reached",
             message: userId
-              ? "You've used all 3 free checks (lifetime). Upgrade to Starter for unlimited checks."
-              : "You've used all 3 free checks (lifetime). Sign up to continue checking.",
+              ? "You've used your 3 free account checks. Upgrade to Starter for unlimited scans."
+              : "You've used your 1 free guest check. Sign up to unlock 3 additional free scans.",
             remaining: 0,
             isLifetime: true,
+            needsAuth: !userId
           },
-          { status: 429 }
+          { status: 403 }
         );
       }
 
-      // Increment LIFETIME count (not daily)
+      // Record telemetry and increment count
       if (ipData) {
         await supabase
           .from("anonymous_ats_checks")
           .update({ 
             lifetime_checks: lifetimeChecks + 1,
+            user_id: ipData.user_id || userId,
             last_check_date: new Date().toISOString().split("T")[0]
           })
           .eq("ip_address", userIp);
       } else {
         await supabase.from("anonymous_ats_checks").insert({
           ip_address: userIp,
+          user_id: userId,
           lifetime_checks: 1,
           checks_today: 1,
           last_check_date: new Date().toISOString().split("T")[0],
@@ -152,14 +181,68 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const startTime = Date.now();
-    const result = scoreResume(resumeText, jobDescription);
-    const processingTime = Date.now() - startTime;
+    const analyzeResult = await analyzeResume(resumeText, jobDescription);
+    const result = analyzeResult; // Alias for compatibility with existing code
+    const processingTime = result.processingTime;
+
+    // MAGIC IMPORT: Use the resumeId returned from the scan first, fallback to DB query
+    let resumeId = null;
+    if (userId) {
+      try {
+        // Find latest asset or create one
+        const { data: latestResume } = await supabase
+          .from("resumes")
+          .select("id")
+          .eq("user_id", userId)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        resumeId = latestResume?.id;
+
+        if (resumeId) {
+          // Update existing asset
+          await supabase
+            .from("resumes")
+            .update({
+              last_ats_score: result.overall_score,
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", resumeId);
+        } else {
+          // Create brand new asset for first-time user
+          const { data: newResume, error: insertError } = await supabase
+            .from("resumes")
+            .insert({
+              user_id: userId,
+              title: jobTitle || "Strategic Audit Asset",
+              target_role: jobTitle || "Market Analysis Candidate",
+              last_ats_score: result.overall_score,
+              template_id: "modern",
+              content: { 
+                personalInfo: { fullName: profile?.full_name || "Protocol Alpha" },
+                personal: { summary: "" },
+                experience: [], 
+                education: [], 
+                skills: [] 
+              },
+              settings: { layout: "default" }
+            })
+            .select("id")
+            .single();
+          
+          if (insertError) throw insertError;
+          resumeId = newResume?.id;
+        }
+      } catch (resumeError) {
+        console.error("VELSEAI Logic Fault: Failed to synchronize resume asset:", resumeError);
+      }
+    }
 
     const { data: savedScore, error: saveError } = await supabase
       .from("ats_scores")
       .insert({
-        resume_id: null,
+        resume_id: resumeId, // Link to the asset
         user_id: userId,
         session_id: userId ? null : sessionId,
         job_description: jobDescription,
@@ -210,6 +293,7 @@ export async function POST(request: NextRequest) {
         success: true,
         sessionId,
         scoreId: savedScore?.id,
+        resumeId,
         ...result,
         processingTime,
         unlimited: canHaveUnlimited,

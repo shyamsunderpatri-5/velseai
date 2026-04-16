@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   return {
     title: `Pricing — VELSEAI AI Resume Builder`,
-    description: `VELSEAI plans start at various prices. Includes unlimited ATS checks, AI resume builder, templates, job tracker, and cover letter generator.`,
+    description: `VELSEAI plans start at $9. Includes unlimited ATS checks, AI resume builder, templates, job tracker, and cover letter generator.`,
     openGraph: {
       title: 'VELSEAI Pricing — AI Resume Builder',
       description: 'Get ATS-ready resumes with VELSEAI. Lifetime deal available.',
@@ -58,52 +58,30 @@ export default async function PricingPage({ params }: Props) {
       accent: "border-white/10",
     },
     {
-      id: "starter",
-      name: "Starter",
-      price: pricing.starter.monthly,
-      yearlyPrice: pricing.starter.yearly,
-      yearlySavings: (pricing.starter.monthly * 12) - pricing.starter.yearly,
-      description: "Best for serious job seekers aiming for top tech roles.",
+      id: "sprint",
+      name: "30-Day Sprint Pass",
+      price: 9,
+      description: "Perfect for high-intensity job searches. Nuke the competition with 30 days of unlimited power.",
       features: [
-        { text: "5 resumes", included: true },
-        { text: "All 5 templates", included: true },
+        { text: "Unlimited resumes", included: true },
         { text: "Unlimited ATS checks", included: true },
-        { text: "50 AI uses/day", included: true },
-        { text: "PDF + DOCX export", included: true },
-        { text: "Job tracker (50 jobs)", included: true },
+        { text: "Unlimited AI generations", included: true },
+        { text: "All 5 premium templates", included: true },
+        { text: "Job tracker (Unlimited)", included: true },
         { text: "Cover letter generator", included: true },
+        { text: "PDF + DOCX export", included: true },
       ],
-      cta: "Start 7-Day Trial",
+      cta: "Grab My Sprint Pass",
       popular: true,
       accent: "border-violet-500/50",
     },
     {
-      id: "pro",
-      name: "Pro",
-      price: pricing.pro.monthly,
-      yearlyPrice: pricing.pro.yearly,
-      yearlySavings: (pricing.pro.monthly * 12) - pricing.pro.yearly,
-      description: "For professionals who want the absolute best AI advantage.",
-      features: [
-        { text: "Unlimited resumes", included: true },
-        { text: "All templates + future", included: true },
-        { text: "Unlimited ATS checks", included: true },
-        { text: "Unlimited AI uses", included: true },
-        { text: "No watermark", included: true },
-        { text: "Unlimited job tracker", included: true },
-        { text: "LinkedIn import", included: true },
-      ],
-      cta: "Start 7-Day Trial",
-      popular: false,
-      accent: "border-white/10",
-    },
-    {
       id: "lifetime",
-      name: "Lifetime",
+      name: "Lifetime Affiliate",
       price: pricing.lifetime.price,
       description: "One-time payment, forever access. No subscriptions, ever.",
       features: [
-        { text: "Everything in Pro", included: true },
+        { text: "Everything in Sprint Pass", included: true },
         { text: "No monthly fees, ever", included: true },
         { text: "All future templates", included: true },
         { text: "Priority support", included: true },
@@ -128,7 +106,7 @@ export default async function PricingPage({ params }: Props) {
             Choose your plan
           </h1>
           <p className="text-white/40 max-w-xl mx-auto text-lg font-medium">
-            Start free, upgrade when ready. 30-day money-back guarantee.
+            Start free, upgrade to the Sprint Pass when you're ready to nuke the competition.
           </p>
           
           <div className="mt-8 text-[11px] font-bold text-white/20 uppercase tracking-[0.2em]">
@@ -158,8 +136,8 @@ export default async function PricingPage({ params }: Props) {
               <p className="text-white/40 text-sm leading-relaxed">We accept all major credit/debit cards, Apple Pay, and Google Pay through Stripe's secure infrastructure.</p>
             </div>
             <div className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl group hover:bg-white/[0.04] transition-colors">
-              <h3 className="font-bold mb-3 text-lg">Is there a free trial?</h3>
-              <p className="text-white/40 text-sm leading-relaxed">Starter and Pro plans come with a 7-day free trial. You won't be charged if you cancel before the trial ends.</p>
+              <h3 className="font-bold mb-3 text-lg">Can I try it for free?</h3>
+              <p className="text-white/40 text-sm leading-relaxed">Yes! You can start with our Free tier to check your score and test the AI. Upgrade to the Sprint Pass whenever you need unlimited power.</p>
             </div>
             <div className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl group hover:bg-white/[0.04] transition-colors">
               <h3 className="font-bold mb-3 text-lg">Is my data secure?</h3>

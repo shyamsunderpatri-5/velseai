@@ -1,6 +1,5 @@
 import createMiddleware from 'next-intl/middleware';
 import { updateSession } from "@/lib/supabase/middleware";
-import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import { locales, defaultLocale, localeCountryMap, type Locale } from '@/i18n/config';
 
@@ -10,60 +9,84 @@ const intlMiddleware = createMiddleware({
   localePrefix: 'always'
 });
 
-export async function proxy(request: NextRequest) {
+/**
+ * Institutional Security Proxy (Next.js 16 Edition)
+ * ----------------------------
+ * 1. Orchestrates locale-aware routing via next-intl.
+ * 2. Enforces institutional-grade session validation at the edge.
+ * 3. Handles auto-redirection for authenticated vs guest users.
+ */
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip for API routes, static files, _next
+  // 1. Session & Cookie Sync: Essential for a reliable SSR experience
+  const response = await updateSession(request);
+  
+  // If updateSession returned a redirect, honor it immediately
+  if (response.status === 302 || response.status === 307) {
+    return response;
+  }
+
+  // 2. Metadata, Static & API Pass-through
   if (
-    pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/') || // Critical: API routes are NOT locale-prefixed
     pathname.includes('/favicon') ||
+    pathname.includes('/logo-') || // Whitelist branding assets
     pathname.includes('.')
   ) {
-    return await updateSession(request);
+    return response;
   }
 
-  // Locale detection for root path
+  // 3. Root Level Redirect (Geo-Aware & Session-Protected)
   if (pathname === '/') {
-    const savedLocale = request.cookies.get('selvo-locale')?.value as Locale;
-    if (savedLocale && locales.includes(savedLocale)) {
-      return NextResponse.redirect(new URL(`/${savedLocale}`, request.url));
-    }
+    // Session check for root to dashboard redirect
+    const supabase = await (await import('@/lib/supabase/server')).createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
+    const savedLocale = request.cookies.get('selvo-locale')?.value as Locale;
     const country = request.headers.get('CF-IPCountry') || '';
     const geoLocale = localeCountryMap[country];
-    if (geoLocale) {
-      return NextResponse.redirect(new URL(`/${geoLocale}`, request.url));
-    }
+    const targetLocale = (savedLocale && locales.includes(savedLocale)) ? savedLocale : (geoLocale || 'en');
 
-    const acceptLang = request.headers.get('accept-language') || '';
-    const browserLang = acceptLang.split(',')[0].split('-')[0].toLowerCase() as Locale;
-    if (locales.includes(browserLang)) {
-      return NextResponse.redirect(new URL(`/${browserLang}`, request.url));
-    }
-
-    return NextResponse.redirect(new URL('/en', request.url));
+    const targetPath = user ? `/${targetLocale}/ats-checker` : `/${targetLocale}`;
+    return NextResponse.redirect(new URL(targetPath, request.url));
   }
 
-  // Auth protection for dashboard routes
-  const localePattern = locales.join('|');
-  const isDashboardRoute = new RegExp(`^/(${localePattern})/(dashboard|resume|jobs|settings)`).test(pathname);
+  // 4. Multi-Locale Session Guard (Institutional Security)
+  const localeMatch = pathname.match(/^\/([a-z]{2})(\/|$)/);
+  if (localeMatch) {
+    const locale = localeMatch[1];
+    const pathWithoutLocale = pathname.replace(new RegExp(`^\\/${locale}`), '') || '/';
 
-  if (isDashboardRoute) {
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { get: (n) => request.cookies.get(n)?.value, set: () => {}, remove: () => {} } }
-    );
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      const locale = pathname.split('/')[1] || defaultLocale;
+    const isDashboardRoute = 
+      pathWithoutLocale.startsWith("/dashboard") ||
+      pathWithoutLocale.startsWith("/resume") ||
+      pathWithoutLocale.startsWith("/jobs") ||
+      pathWithoutLocale.startsWith("/ats-checker") ||
+      pathWithoutLocale.startsWith("/settings");
+
+    const isAuthPage = pathWithoutLocale.startsWith("/auth") && !pathWithoutLocale.startsWith("/auth/signout");
+    const isLandingPage = pathWithoutLocale === "/";
+
+    // Fast-path user check
+    const supabase = await (await import('@/lib/supabase/server')).createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Authenticated users visitor a landing/auth page (excluding signout) -> Force to Dashboard
+    if (user && (isLandingPage || isAuthPage)) {
+      return NextResponse.redirect(new URL(`/${locale}/ats-checker`, request.url));
+    }
+
+    // Guest users attempting to reach protected routes -> Force to Login
+    if (!user && isDashboardRoute) {
       const loginUrl = new URL(`/${locale}/auth/login`, request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
   }
 
+  // 5. Normal i18n Routing
   return intlMiddleware(request);
 }
 

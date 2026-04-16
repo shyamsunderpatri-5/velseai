@@ -9,46 +9,56 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  Type,
+  X,
+  Layers
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TEMPLATES = [
   {
     id: "modern",
-    name: "Modern",
-    description: "Clean and professional with a touch of color",
-    preview: "bg-gradient-to-br from-slate-800 to-slate-900",
+    name: "Modern Elite",
+    description: "Multi-column, high-impact design for tech innovators.",
+    preview: "bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20",
     accent: "#7C3AED",
   },
   {
-    id: "classic",
-    name: "Classic",
-    description: "Traditional two-column layout",
-    preview: "bg-white",
-    accent: "#1A1A2E",
+    id: "tech",
+    name: "Architect",
+    description: "Optimized for Engineering and Product protocols.",
+    preview: "bg-slate-900",
+    accent: "#10B981",
   },
   {
     id: "creative",
-    name: "Creative",
-    description: "Stand out with unique design elements",
+    name: "Maverick",
+    description: "Bold typography and progressive section layouts.",
     preview: "bg-gradient-to-br from-purple-900 to-pink-900",
     accent: "#EC4899",
   },
   {
-    id: "minimal",
-    name: "Minimal",
-    description: "Less is more - clean and simple",
-    preview: "bg-gray-100",
-    accent: "#6B7280",
+    id: "classic",
+    name: "Executive",
+    description: "The gold standard for leadership and traditional fields.",
+    preview: "bg-white/5",
+    accent: "#FFFFFF",
   },
   {
-    id: "tech",
-    name: "Tech",
-    description: "Perfect for software engineers",
-    preview: "bg-slate-900",
-    accent: "#10B981",
+    id: "minimal",
+    name: "Zenith",
+    description: "Focus on clarity. Zero clutter, maximum signal.",
+    preview: "bg-zinc-800",
+    accent: "#A1A1AA",
   },
+];
+
+const ACCENTS = ["#7C3AED", "#10B981", "#EC4899", "#3B82F6", "#F59E0B", "#FFFFFF"];
+const FONTS = [
+  { name: "Inter", value: "font-inter" },
+  { name: "Outfit", value: "font-outfit" },
+  { name: "Playfair", value: "font-playfair" },
 ];
 
 interface TemplateSelectorProps {
@@ -60,7 +70,7 @@ interface TemplateSelectorProps {
 export function TemplateSelector({ currentTemplate, onSelect, className }: TemplateSelectorProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [currentIndex, setCurrentIndex] = React.useState(
-    TEMPLATES.findIndex(t => t.id === currentTemplate) || 0
+    Math.max(0, TEMPLATES.findIndex(t => t.id === currentTemplate))
   );
 
   const current = TEMPLATES[currentIndex];
@@ -76,121 +86,149 @@ export function TemplateSelector({ currentTemplate, onSelect, className }: Templ
   return (
     <div className={cn("relative", className)}>
       <Button
-        variant="outline"
+        variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
-        className="h-9 border-white/10 bg-white/5 text-white/70 hover:text-white gap-2"
+        className={cn(
+          "h-9 px-4 bg-white/5 border border-white/5 hover:border-violet-500/30 hover:bg-white/10 text-white/70 hover:text-white rounded-xl transition-all duration-500 gap-3 group",
+          isOpen && "border-violet-500/50 bg-violet-500/10 text-white"
+        )}
       >
-        <Layout className="w-4 h-4" />
-        <span className="text-xs font-medium">{current.name}</span>
+        <Layers className={cn("w-4 h-4 transition-transform duration-500", isOpen ? "rotate-180" : "group-hover:scale-110")} />
+        <span className="text-[10px] font-black uppercase tracking-[0.2em]">{current.name}</span>
         <div 
-          className="w-3 h-3 rounded-full ml-2" 
+          className="w-2 h-2 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.3)]" 
           style={{ backgroundColor: current.accent }}
         />
       </Button>
 
-      {isOpen && (
-        <div className="absolute top-full mt-2 right-0 w-80 bg-[#18181B] border border-white/10 rounded-2xl p-4 shadow-2xl z-50">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-white text-sm">Choose Template</h3>
-            <Button
-              variant="ghost"
-              size="sm"
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop for focus */}
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={() => setIsOpen(false)}
-              className="text-zinc-400 hover:text-white"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-          </div>
+              className="fixed inset-0 z-40 bg-[#050506]/60 backdrop-blur-sm"
+            />
 
-          {/* Preview Card */}
-          <div className="relative mb-4">
-            <div 
-              className={cn(
-                "h-32 rounded-xl border border-white/10 flex items-center justify-center",
-                current.preview
-              )}
+            <motion.div 
+              initial={{ opacity: 0, y: 10, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute top-full mt-4 right-0 w-[360px] bg-[#0A0A0C] border border-white/10 rounded-[2rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 overflow-hidden"
             >
-              <FileText className={cn(
-                "w-12 h-12",
-                ["classic", "minimal"].includes(current.id) ? "text-gray-400" : "text-white/50"
-              )} />
-            </div>
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2">
-              <Button 
-                size="sm"
-                onClick={() => {
-                  onSelect(current.id);
-                  setIsOpen(false);
-                }}
-                className="bg-purple-600 hover:bg-purple-700 text-xs"
-              >
-                <Check className="w-3 h-3 mr-1" />
-                Apply
-              </Button>
-            </div>
-          </div>
+              {/* Decorative background glow */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-violet-600/10 blur-[60px] pointer-events-none" />
+              
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="font-black text-white text-xs uppercase tracking-[0.3em]">Design Laboratory</h3>
+                  <p className="text-[10px] text-white/20 font-bold uppercase tracking-widest mt-1">Configure your visual protocol</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsOpen(false)}
+                  className="w-8 h-8 rounded-full text-white/20 hover:text-white hover:bg-white/5"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
 
-          {/* Template Info */}
-          <div className="text-center mb-4">
-            <h4 className="font-medium text-white text-sm">{current.name}</h4>
-            <p className="text-xs text-zinc-500">{current.description}</p>
-          </div>
-
-          {/* Navigation */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrev}
-              className="text-zinc-400 hover:text-white"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </Button>
-            <div className="flex gap-1">
-              {TEMPLATES.map((_, idx) => (
-                <div
-                  key={idx}
+              {/* Template Preview Carousel */}
+              <div className="relative group mb-10">
+                <div 
                   className={cn(
-                    "w-1.5 h-1.5 rounded-full transition-colors",
-                    idx === currentIndex ? "bg-purple-500" : "bg-zinc-700"
+                    "aspect-[1.4/1] rounded-2xl border border-white/5 flex items-center justify-center overflow-hidden transition-all duration-700",
+                    current.preview
                   )}
-                />
-              ))}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleNext}
-              className="text-zinc-400 hover:text-white"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </Button>
-          </div>
+                >
+                  <motion.div
+                    key={current.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className="flex flex-col items-center gap-4"
+                  >
+                    <FileText className="w-16 h-16 text-white/40 drop-shadow-2xl" />
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        onSelect(current.id);
+                        setIsOpen(false);
+                      }}
+                      className="bg-white text-black hover:bg-white/90 rounded-full px-6 font-black text-[10px] uppercase tracking-widest shadow-xl"
+                    >
+                      Deploy Protocol
+                    </Button>
+                  </motion.div>
+                </div>
+                
+                <button onClick={handlePrev} className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button onClick={handleNext} className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all opacity-0 group-hover:opacity-100">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
-          {/* Color customization */}
-          <div className="mt-4 pt-4 border-t border-white/5">
-            <div className="flex items-center gap-2 mb-2">
-              <Palette className="w-3.5 h-3.5 text-zinc-500" />
-              <span className="text-xs text-zinc-500">Accent Color</span>
-            </div>
-            <div className="flex gap-2">
-              {["#7C3AED", "#EC4899", "#10B981", "#F59E0B", "#3B82F6"].map((color) => (
-                <button
-                  key={color}
-                  className={cn(
-                    "w-6 h-6 rounded-full border-2 transition-transform hover:scale-110",
-                    current.accent === color ? "border-white" : "border-transparent"
-                  )}
-                  style={{ backgroundColor: color }}
-                  onClick={() => {
-                    onSelect(current.id);
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+              <div className="space-y-8">
+                {/* Template Info */}
+                <div className="text-center">
+                  <h4 className="font-black text-white text-sm uppercase tracking-widest mb-2">{current.name}</h4>
+                  <p className="text-[11px] text-white/30 font-medium leading-relaxed px-4">{current.description}</p>
+                </div>
+
+                {/* Accent Color Section */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Palette className="w-3.5 h-3.5 text-violet-500" />
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Chromatic Accent</span>
+                  </div>
+                  <div className="flex justify-between items-center px-1">
+                    {ACCENTS.map((color) => (
+                      <button
+                        key={color}
+                        className={cn(
+                          "w-8 h-8 rounded-full border-4 transition-all duration-300 hover:scale-125",
+                          current.accent === color ? "border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]" : "border-transparent"
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => {
+                          // Note: In real app, we'd update store theme color
+                          onSelect(current.id);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Typography Section */}
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Type className="w-3.5 h-3.5 text-blue-500" />
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">Typography Matrix</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {FONTS.map((font) => (
+                      <button
+                        key={font.value}
+                        className={cn(
+                          "py-3 rounded-xl bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest transition-all",
+                          "hover:bg-white/10 hover:border-white/10"
+                        )}
+                      >
+                        {font.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

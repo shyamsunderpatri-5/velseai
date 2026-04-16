@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import OpenAI from "openai";
+import { generateStructuredJSON } from "@/lib/ai";
 import * as Sentry from "@sentry/nextjs";
 import { getJDVisionPrompt } from "@/lib/ai/prompts";
 import { JDExtractionSchema } from "@/lib/ai/structured-outputs";
@@ -22,7 +22,7 @@ import { JDExtractionSchema } from "@/lib/ai/structured-outputs";
  *   - Telegram bot: image → this endpoint
  */
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
 
 const schema = z.object({
   mode: z.enum(["image", "text"]),
@@ -88,37 +88,19 @@ export async function POST(request: NextRequest) {
         ? { type: "image_url" as const, image_url: { url: imageBase64, detail: "high" as const } }
         : { type: "image_url" as const, image_url: { url: imageUrl!, detail: "high" as const } };
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: getJDVisionPrompt(locale) },
-              imageContent,
-            ],
-          },
-        ],
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
-        temperature: 0.1,
-      });
-
-      const rawContent = completion.choices[0]?.message?.content || "{}";
-
-      try {
-        const parsed = JSON.parse(rawContent);
-        extractionResult = JDExtractionSchema.parse(parsed);
-      } catch (parseErr) {
-        console.error("[jd-extraction] Parse error:", parseErr);
-        return NextResponse.json(
-          {
-            error: "Could not extract JD from image. Try a clearer photo or paste the JD as text.",
-            raw: rawContent.slice(0, 200),
-          },
-          { status: 422 }
-        );
+      // JD Vision currently requires OpenAI (gpt-4o)
+      if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === "sk-placeholder") {
+         return NextResponse.json({ error: "JD Vision requires a valid OpenAI API Key. Please update your environment." }, { status: 401 });
       }
+
+      const { generateStructuredWithOpenAI } = await import("@/lib/ai/openai");
+      const rawResult = await generateStructuredWithOpenAI<any>(
+        getJDVisionPrompt(locale),
+        {},
+        { model: "gpt-4o", temperature: 0.1 }
+      );
+      
+      extractionResult = JDExtractionSchema.parse(rawResult);
 
       // Track AI usage
       if (user) {
@@ -126,7 +108,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           feature: "jd_vision",
           model_used: "gpt-4o",
-          tokens_used: completion.usage?.total_tokens || 0,
+          tokens_used: 0,
         });
       }
 
@@ -142,42 +124,17 @@ export async function POST(request: NextRequest) {
       }
 
       const textExtractionPrompt = `Extract structured job information from this job description text.
-Return ONLY valid JSON matching this exact schema (null for missing fields):
-{
-  "company_name": "string",
-  "job_title": "string",
-  "location": "string or null",
-  "salary_range": "string or null",
-  "job_type": "full_time|part_time|contract|remote|hybrid|unknown",
-  "required_skills": ["array"],
-  "nice_to_have_skills": ["array"],
-  "required_experience_years": "number or null",
-  "education_requirement": "string or null",
-  "key_responsibilities": ["array, max 8"],
-  "benefits": ["array"],
-  "application_deadline": "string or null",
-  "contact_email": "string or null",
-  "raw_text": "${rawText.slice(0, 100)}...",
-  "confidence": 0.95,
-  "language": "en|de|fr|es|hi|pt|ar|other"
-}
-
-JOB DESCRIPTION:
 ${rawText.slice(0, 4000)}`;
 
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "user", content: textExtractionPrompt }],
-        max_tokens: 1500,
-        response_format: { type: "json_object" },
+      // Text-based extraction uses the orchestrator (Automatic Fallback Groq/OpenAI)
+      const rawResult = await generateStructuredJSON<any>(textExtractionPrompt, {}, {
         temperature: 0.1,
+        priority: "speed"
       });
-
-      const rawContent = completion.choices[0]?.message?.content || "{}";
-      const parsed = JSON.parse(rawContent);
+      
       // Inject raw_text since model might truncate it
-      parsed.raw_text = rawText.slice(0, 5000);
-      extractionResult = JDExtractionSchema.parse(parsed);
+      rawResult.raw_text = rawText.slice(0, 5000);
+      extractionResult = JDExtractionSchema.parse(rawResult);
     }
 
     // ── Save to DB ────────────────────────────────────────────────────────────

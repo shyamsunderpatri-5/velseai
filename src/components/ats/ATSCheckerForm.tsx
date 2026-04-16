@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Upload, FileText, X, Loader2, AlertCircle } from "lucide-react";
+import { Upload, FileText, X, Loader2, AlertCircle, ArrowRight, ShieldCheck } from "lucide-react";
 
 interface ATSCheckerFormProps {
   onSubmit: (data: {
@@ -34,7 +34,38 @@ export function ATSCheckerForm({
   const [jobDescription, setJobDescription] = React.useState("");
   const [companyName, setCompanyName] = React.useState("");
   const [jobTitle, setJobTitle] = React.useState("");
+  const [scrapingUrl, setScrapingUrl] = React.useState("");
+  const [isScraping, setIsScraping] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
+
+  const handleScrape = async () => {
+    if (!scrapingUrl) return;
+    setIsScraping(true);
+    setValidationError(null);
+
+    try {
+      const res = await fetch("/api/ai/scrape-linkedin-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: scrapingUrl }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Scraping failed");
+
+      if (data.job_description) setJobDescription(data.job_description);
+      if (data.company_name) setCompanyName(data.company_name);
+      if (data.job_title) setJobTitle(data.job_title);
+      
+      // Feedback to user
+      setValidationError(null);
+    } catch (err: any) {
+      console.error("Scrape failed:", err);
+      setValidationError(`Scrape blocked by LinkedIn security. Please paste manually.`);
+    } finally {
+      setIsScraping(false);
+    }
+  };
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -92,16 +123,16 @@ export function ATSCheckerForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={cn("space-y-6", className)}>
+    <form onSubmit={handleSubmit} className={cn("space-y-2", className)}>
       <Tabs defaultValue="paste" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="paste">Paste Resume Text</TabsTrigger>
           <TabsTrigger value="upload">Upload File</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="paste" className="space-y-4">
+        <TabsContent value="paste" className="space-y-1">
           <Textarea
-            placeholder="Paste your resume text here...&#10;&#10;Example:&#10;John Doe&#10;Software Engineer&#10;john.doe@email.com | +91 98765 43210&#10;&#10;Experience&#10;Software Engineer at ABC Corp (2022-Present)&#10;- Developed web applications using React and Node.js&#10;- Improved system performance by 40%..."
+            placeholder="Paste your resume text here..."
             value={resumeText}
             onChange={(e) => {
               setResumeText(e.target.value);
@@ -111,125 +142,126 @@ export function ATSCheckerForm({
               }
               setValidationError(null);
             }}
-            className="min-h-[300px] font-mono text-sm"
+            className="min-h-[70px] font-mono text-xs"
           />
         </TabsContent>
 
-        <TabsContent value="upload" className="space-y-4">
+        <TabsContent value="upload" className="space-y-1">
           {resumeFile ? (
-            <div className="flex items-center justify-between p-4 rounded-lg border bg-success/5 border-success/20">
-              <div className="flex items-center gap-3">
-                <FileText className="w-8 h-8 text-success" />
+            <div className="flex items-center justify-between p-2 rounded-lg border bg-success/5 border-success/20">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-success" />
                 <div>
-                  <p className="font-medium">{fileName}</p>
-                  <p className="text-sm text-muted-foreground">Ready to analyze</p>
+                  <p className="text-[10px] font-medium">{fileName}</p>
+                  <p className="text-[8px] text-muted-foreground uppercase tracking-wider">Ready to analyze</p>
                 </div>
               </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
+                className="h-6 w-6"
                 onClick={removeFile}
               >
-                <X className="w-4 h-4" />
+                <X className="w-3 h-3" />
               </Button>
             </div>
           ) : (
             <div
               {...getRootProps()}
               className={cn(
-                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                "border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-colors",
                 isDragActive
                   ? "border-primary bg-primary/5"
                   : "border-muted-foreground/25 hover:border-primary"
               )}
             >
               <input {...getInputProps()} />
-              <Upload className="w-10 h-10 mx-auto mb-4 text-muted-foreground" />
-              <p className="font-medium">
+              <Upload className="w-5 h-5 mx-auto mb-1 text-muted-foreground" />
+              <p className="text-[10px] font-medium">
                 {isDragActive
                   ? "Drop the file here..."
-                  : "Drag & drop or click to upload"}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Supports PDF, DOC, DOCX, TXT (max 5MB)
+                  : "Drag & drop or click"}
               </p>
             </div>
           )}
         </TabsContent>
       </Tabs>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">
-          Job Description <span className="text-destructive">*</span>
+      <div className="space-y-3">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 flex items-center justify-between">
+          <span>Target Intelligence</span>
+          <span className="text-violet-400">Optional URL Scraping</span>
+        </label>
+        <div className="flex gap-2">
+           <Input 
+             placeholder="Paste LinkedIn Job URL..." 
+             className="flex-1 bg-white/5 border-white/10 text-xs h-10"
+             value={scrapingUrl}
+             onChange={(e) => setScrapingUrl(e.target.value)}
+           />
+           <Button 
+             type="button"
+             onClick={handleScrape}
+             disabled={isScraping || !scrapingUrl.includes("linkedin.com")}
+             className="bg-violet-600 hover:bg-violet-700 text-white h-10 px-4 text-[10px] font-black uppercase tracking-widest"
+           >
+             {isScraping ? <Loader2 className="w-4 h-4 animate-spin" /> : "Scrape"}
+           </Button>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+          Job Description <span className="text-red-500">*</span>
         </label>
         <Textarea
-          placeholder="Paste the job description here...&#10;&#10;Tip: Copy directly from LinkedIn, Indeed, or Glassdoor job postings for best results."
+          placeholder="Paste the job description here..."
           value={jobDescription}
           onChange={(e) => {
             setJobDescription(e.target.value);
             setValidationError(null);
           }}
-          className="min-h-[200px]"
+          className="min-h-[120px] text-sm bg-white/5 border-white/10"
         />
-        <p className="text-xs text-muted-foreground">
-          {jobDescription.length} characters (minimum 50 required)
-        </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Company Name (Optional)</label>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-0.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Company (Optional)</label>
           <Input
-            placeholder="e.g., TCS, Google, Amazon"
+            placeholder="e.g., Google"
             value={companyName}
             onChange={(e) => setCompanyName(e.target.value)}
+            className="h-9 text-xs bg-white/5 border-white/10"
           />
         </div>
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Job Title (Optional)</label>
+        <div className="space-y-0.5">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Job Title (Optional)</label>
           <Input
-            placeholder="e.g., Software Engineer"
+            placeholder="e.g., Engineer"
             value={jobTitle}
             onChange={(e) => setJobTitle(e.target.value)}
+            className="h-9 text-xs bg-white/5 border-white/10"
           />
         </div>
       </div>
-
-      {(validationError || error) && (
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          {validationError || error}
-        </div>
-      )}
 
       <Button
         type="submit"
-        size="xl"
-        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground"
+        size="lg"
+        className="w-full h-12 bg-white text-black hover:bg-white/90 font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-white/10 transition-all hover:scale-[1.01] active:scale-[0.99] mt-4"
         disabled={isLoading}
       >
         {isLoading ? (
           <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Analyzing Resume...
+            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            Decoding JD Intelligence...
           </>
         ) : (
           <>
-            Check ATS Score
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M13 7l5 5m0 0l-5 5m5-5H6"
-              />
-            </svg>
+            Validate ATS Score
+            <ArrowRight className="w-4 h-4 ml-2" />
           </>
         )}
       </Button>

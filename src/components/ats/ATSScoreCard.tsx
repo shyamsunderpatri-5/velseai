@@ -3,11 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { Target, FileText, Briefcase, Calendar, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Target, FileText, Briefcase, Calendar, Sparkles, Zap } from "lucide-react";
 
 interface SubScore {
   label: string;
-  value: number;
+  value?: number;
+  analysis?: string;
   icon: React.ReactNode;
 }
 
@@ -19,38 +21,34 @@ interface ATSScoreCardProps {
 
 export function ATSScoreCard({ score, subScores, className }: ATSScoreCardProps) {
   const getScoreColor = (value: number) => {
-    if (value >= 86) return "bg-success";
-    if (value >= 71) return "bg-blue-500";
-    if (value >= 41) return "bg-warning";
-    return "bg-destructive";
+    if (value >= 85) return "bg-emerald-500"; // Institutional Success
+    if (value >= 70) return "bg-violet-600";  // VelseAI Brand
+    if (value >= 40) return "bg-amber-500";   // Strategic Warning
+    return "bg-rose-500";                    // Protocol Breach
   };
 
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-muted-foreground">
-            Overall ATS Score
-          </span>
-          <Badge
-            variant={
-              score >= 86
-                ? "success"
-                : score >= 71
-                ? "default"
-                : score >= 41
-                ? "warning"
-                : "destructive"
-            }
-          >
-            {score >= 86 ? "ATS Optimized" : "Needs Improvement"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-black text-white/40 uppercase tracking-[0.2em]">
+              Intelligence Quotient (IQ)
+            </span>
+            <div className="px-1.5 py-0.5 rounded-full bg-violet-600/10 border border-violet-500/20 text-[8px] font-black text-violet-500 uppercase tracking-widest">
+              Live Audit
+            </div>
+          </div>
+          <div className="text-2xl font-black text-white tracking-tighter">
+            {score}%
+          </div>
         </div>
-        <div className="relative">
-          <Progress
-            value={score}
-            className="h-4"
-            indicatorClassName={getScoreColor(score)}
+        <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${score}%` }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            className={cn("h-full transition-all duration-1000", getScoreColor(score))}
           />
         </div>
       </div>
@@ -59,20 +57,39 @@ export function ATSScoreCard({ score, subScores, className }: ATSScoreCardProps)
         {subScores.map((sub) => (
           <div
             key={sub.label}
-            className="p-4 rounded-lg border bg-card space-y-2"
+            className="p-5 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-all group"
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">{sub.icon}</span>
-                <span className="text-sm font-medium">{sub.label}</span>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-xl bg-violet-600/10 text-violet-500 group-hover:scale-110 transition-transform">
+                    {sub.icon}
+                  </div>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">
+                    {sub.label}
+                  </span>
+                </div>
+                {sub.value !== undefined && (
+                  <span className="text-sm font-black text-white">
+                    {sub.value}%
+                  </span>
+                )}
               </div>
-              <span className="text-lg font-bold tabular-nums">{sub.value}%</span>
+              
+              {sub.analysis ? (
+                <p className="text-[10px] leading-relaxed text-zinc-500 font-bold uppercase tracking-wide line-clamp-4">
+                  {sub.analysis}
+                </p>
+              ) : (
+                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${sub.value}%` }}
+                    className={cn("h-full", getScoreColor(sub.value || 0))}
+                  />
+                </div>
+              )}
             </div>
-            <Progress
-              value={sub.value}
-              className="h-2"
-              indicatorClassName={getScoreColor(sub.value)}
-            />
           </div>
         ))}
       </div>

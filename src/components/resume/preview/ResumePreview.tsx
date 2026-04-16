@@ -25,10 +25,16 @@ export function ResumePreview({ content, settings }: ResumePreviewProps) {
   const TemplateComponent = templateComponents[settings.templateId] || ModernTemplate;
 
   return (
-    <div className="p-4">
-      <div className="bg-white rounded-lg shadow-lg overflow-hidden" style={{ aspectRatio: "210/297", transform: "scale(1)", transformOrigin: "top left" }}>
-        <TemplateComponent content={content} settings={settings} />
-      </div>
+    <div 
+      className="bg-white text-slate-900 shadow-[0_0_80px_rgba(0,0,0,0.4)]" 
+      style={{ 
+        width: "210mm", 
+        minHeight: "297mm", 
+        backgroundColor: "white" 
+      }}
+    >
+      <TemplateComponent content={content} settings={settings} />
     </div>
   );
 }
+

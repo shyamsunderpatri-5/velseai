@@ -4,7 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
 import * as Sentry from "@sentry/nextjs";
 import { getJobMatchScorePrompt } from "@/lib/ai/prompts";
-import { captureServerEvent } from "@/lib/analytics/posthog";
+import { captureServerEvent } from "@/lib/analytics/posthog.server";
+import { analyzeResume } from "@/lib/ats/engine";
 
 /**
  * POST /api/ai/match-score
@@ -110,26 +111,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Ollama fallback for cost control on free tier ─────────────────────────
-    // Note: Ollama doesn't support JSON mode, so we use GPT-4o-mini for match scoring
-    const prompt = getJobMatchScorePrompt({
-      resumeText: resumeText.slice(0, 3000),
-      jobTitle,
-      jobDescription: jobDescription.slice(0, 2000),
-      requiredSkills,
-      locale,
-    });
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",  // cheaper model — match scoring doesn't need gpt-4o
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 1000,
-      response_format: { type: "json_object" },
-      temperature: 0.2,
-    });
-
-    const rawContent = completion.choices[0]?.message?.content || "{}";
-    const matchResult = JSON.parse(rawContent);
+    // ── Unified Elite Intelligence Pass ──────────────────────────────────────
+    // Instead of a standalone OpenAI call, we use the Unified Engine
+    // which blends Deterministic logic + AI analysis for 100% consistency.
+    const analyzeResult = await analyzeResume(resumeText, jobDescription, locale);
+    
+    // Standardize mapping for the existing route logic
+    const matchResult = {
+      match_score: analyzeResult.overall_score,
+      match_level: analyzeResult.match_level,
+      reasons: analyzeResult.reasons,
+      missing_skills: analyzeResult.missing_keywords,
+      matching_skills: analyzeResult.matched_keywords,
+      recommendation: analyzeResult.summary,
+      tailoring_tips: analyzeResult.suggestions.high_priority
+    };
 
     // ── Track AI usage ────────────────────────────────────────────────────────
     await supabase.from("ai_usage").insert({

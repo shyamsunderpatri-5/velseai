@@ -20,6 +20,11 @@ export const ATSSuggestionSchema = z.object({
   action: z.string(),
 });
 
+export const KeywordFrameSchema = z.object({
+  keyword: z.string(),
+  sentence_frame: z.string(),
+});
+
 export const ATSScoreResultSchema = z.object({
   overall_score: z.number().int().min(0).max(100),
   keyword_score: z.number().int().min(0).max(100),
@@ -28,11 +33,38 @@ export const ATSScoreResultSchema = z.object({
   skills_score: z.number().int().min(0).max(100),
   missing_keywords: z.array(z.string()),
   matched_keywords: z.array(z.string()),
+  keyword_frames: z.array(KeywordFrameSchema).optional(),
   suggestions: z.array(ATSSuggestionSchema),
   summary: z.string(),
 });
 
 export type ATSScoreResult = z.infer<typeof ATSScoreResultSchema>;
+
+// ─────────────────────────────────────────────
+// Elite 23-Metric Audit
+// ─────────────────────────────────────────────
+
+export const MetricAuditSchema = z.object({
+  id: z.string(),
+  status: z.enum(["pass", "fail", "warning"]),
+  score: z.number().min(0).max(1),
+  comment: z.string(),                  // Why it passed/failed
+  suggestion: z.string().optional(),     // How to fix it (if failed/warning)
+});
+
+export const FullAuditSchema = z.object({
+  overall_score: z.number().int().min(0).max(100),
+  categories: z.object({
+    foundational: z.array(MetricAuditSchema), // summary, contact, etc.
+    impact: z.array(MetricAuditSchema),       // action_verbs, quantification, etc.
+    formatting: z.array(MetricAuditSchema),   // length, fonts, etc.
+    optimization: z.array(MetricAuditSchema), // keywords, tailoring, etc.
+  }),
+  top_priority_fixes: z.array(z.string()),
+  executive_summary: z.string(),
+});
+
+export type FullAudit = z.infer<typeof FullAuditSchema>;
 
 // ─────────────────────────────────────────────
 // JD Vision Extraction (GPT-4o photo parser)
@@ -108,6 +140,13 @@ export const JobMatchScoreSchema = z.object({
 
 export type JobMatchScore = z.infer<typeof JobMatchScoreSchema>;
 
+export const FinalAnalysisSchema = z.object({
+  audit: FullAuditSchema,
+  match: JobMatchScoreSchema.optional(),
+});
+
+export type FinalAnalysis = z.infer<typeof FinalAnalysisSchema>;
+
 // ─────────────────────────────────────────────
 // Cover Letter Generated Output
 // ─────────────────────────────────────────────
@@ -149,6 +188,71 @@ export const ExternalJobSchema = z.object({
 });
 
 export type ExternalJob = z.infer<typeof ExternalJobSchema>;
+
+// ─────────────────────────────────────────────
+// AI Chat Assistant (Editor Operations)
+// ─────────────────────────────────────────────
+
+/**
+ * These actions represent atomic operations that the AI can perform on the resume state.
+ * This turns the chat from a "consultant" into a "co-pilot/editor".
+ */
+export const AIChatActionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("UPDATE_PERSONAL"),
+    data: z.object({
+      name: z.string().optional(),
+      email: z.string().optional(),
+      phone: z.string().optional(),
+      location: z.string().optional(),
+      title: z.string().optional(),
+      summary: z.string().optional(),
+      website: z.string().optional(),
+      linkedin: z.string().optional(),
+    }),
+  }),
+  z.object({
+    type: z.literal("ADD_EXPERIENCE"),
+    data: z.object({
+      company: z.string(),
+      role: z.string(),
+      startDate: z.string(),
+      endDate: z.string().nullable(),
+      isCurrent: z.boolean(),
+      bulletPoints: z.array(z.string()),
+    }),
+  }),
+  z.object({
+    type: z.literal("UPDATE_EXPERIENCE"),
+    data: z.object({
+      id: z.string(),
+      company: z.string().optional(),
+      role: z.string().optional(),
+      bulletPoints: z.array(z.string()).optional(),
+    }),
+  }),
+  z.object({
+    type: z.literal("ADD_SKILL"),
+    data: z.object({
+      category: z.string(),
+      skills: z.array(z.string()),
+    }),
+  }),
+  z.object({
+    type: z.literal("UPDATE_SECTION_ORDER"),
+    data: z.object({
+      order: z.array(z.string()),
+    }),
+  }),
+]);
+
+export const AIChatResponseSchema = z.object({
+  response: z.string(),                  // The text response to show the user
+  suggested_actions: z.array(AIChatActionSchema), // State mutations to apply
+  new_last_ats_score: z.number().int().optional(),
+});
+
+export type AIChatResponse = z.infer<typeof AIChatResponseSchema>;
 
 // ─────────────────────────────────────────────
 // Helper: Convert Zod schema to OpenAI JSON schema format

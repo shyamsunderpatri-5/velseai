@@ -28,21 +28,15 @@ export function KeywordAnalysis({
           </Badge>
         </div>
         <div className="flex flex-wrap gap-2">
-          {matchedKeywords.length > 0 ? (
-            matchedKeywords.slice(0, 15).map((keyword) => (
-              <Badge
-                key={keyword}
-                variant="success"
-                className="text-xs font-normal"
-              >
-                {keyword}
-              </Badge>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No keywords matched. Add relevant skills and keywords from the job description.
-            </p>
-          )}
+          {[...new Set(matchedKeywords)].slice(0, 15).map((keyword) => (
+            <Badge
+              key={`match-${keyword}`}
+              variant="success"
+              className="text-xs font-normal"
+            >
+              {keyword}
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -54,21 +48,15 @@ export function KeywordAnalysis({
           </Badge>
         </div>
         <div className="flex flex-wrap gap-2">
-          {missingKeywords.length > 0 ? (
-            missingKeywords.slice(0, 15).map((keyword) => (
-              <Badge
-                key={keyword}
-                variant="destructive"
-                className="text-xs font-normal"
-              >
-                {keyword}
-              </Badge>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Great job! Your resume covers the key requirements.
-            </p>
-          )}
+          {[...new Set(missingKeywords)].slice(0, 15).map((keyword) => (
+            <Badge
+              key={`missing-${keyword}`}
+              variant="destructive"
+              className="text-xs font-normal"
+            >
+              {keyword}
+            </Badge>
+          ))}
         </div>
       </div>
 
@@ -76,8 +64,8 @@ export function KeywordAnalysis({
         <div className="space-y-3">
           <h4 className="font-medium text-sm">Hard Skills Matched</h4>
           <div className="flex flex-wrap gap-2">
-            {hardSkillsMatched.slice(0, 10).map((skill) => (
-              <Badge key={skill} variant="secondary" className="text-xs font-normal">
+            {[...new Set(hardSkillsMatched)].slice(0, 10).map((skill) => (
+              <Badge key={`hard-${skill}`} variant="secondary" className="text-xs font-normal">
                 {skill}
               </Badge>
             ))}

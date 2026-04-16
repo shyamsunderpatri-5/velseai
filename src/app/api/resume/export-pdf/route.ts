@@ -44,30 +44,33 @@ export async function GET(request: NextRequest) {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'DM Sans', sans-serif; font-size: 10pt; line-height: 1.4; color: #1a1a1a; padding: 40px; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 16px; border-bottom: 2px solid #1A1A2E; padding-bottom: 12px; }
-        .name { font-size: 20pt; font-weight: 700; color: #1A1A2E; }
-        .role { font-size: 11pt; color: #666; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #1A1A2E; padding-bottom: 16px; min-height: 100px; }
+        .header-content { flex: 1; }
+        .photo-container { width: 90px; height: 110px; margin-left: 20px; overflow: hidden; border-radius: 8px; flex-shrink: 0; }
+        .photo-container img { width: 100%; height: 100%; object-fit: cover; }
+        .name { font-size: 20pt; font-weight: 700; color: #1A1A2E; margin-bottom: 4px; }
+        .role { font-size: 11pt; color: #666; font-weight: 500; }
         .contact { text-align: right; font-size: 8pt; color: #666; }
         .contact p { margin: 2px 0; }
-        .section { margin-bottom: 14px; }
-        .section-title { font-size: 11pt; font-weight: 600; color: #1A1A2E; border-bottom: 1px solid #ddd; padding-bottom: 4px; margin-bottom: 8px; }
-        .summary { font-size: 9pt; color: #333; line-height: 1.5; }
-        .experience-item { margin-bottom: 10px; }
+        .section { margin-bottom: 18px; }
+        .section-title { font-size: 11pt; font-weight: 700; color: #1A1A2E; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .summary { font-size: 9pt; color: #333; line-height: 1.6; margin-bottom: 12px; }
+        .experience-item { margin-bottom: 14px; }
         .exp-header { display: flex; justify-content: space-between; align-items: baseline; }
-        .exp-title { font-weight: 600; font-size: 10pt; }
-        .exp-company { color: #666; font-size: 9pt; }
-        .exp-date { font-size: 8pt; color: #888; }
-        .bullet { font-size: 9pt; color: #333; padding-left: 12px; margin: 3px 0; }
-        .bullet::before { content: "• "; }
-        .skills-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .skill-category { margin-right: 16px; }
-        .skill-category-title { font-weight: 600; font-size: 9pt; color: #1A1A2E; }
+        .exp-title { font-weight: 700; font-size: 10.5pt; color: #111; }
+        .exp-company { color: #444; font-size: 9.5pt; font-weight: 500; }
+        .exp-date { font-size: 8.5pt; color: #777; font-weight: 600; }
+        .bullet { font-size: 9pt; color: #333; padding-left: 14px; margin: 4px 0; line-height: 1.4; }
+        .bullet::before { content: "• "; position: absolute; margin-left: -14px; color: #1A1A2E; }
+        .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; }
+        .skill-category { margin-bottom: 4px; }
+        .skill-category-title { font-weight: 700; font-size: 9pt; color: #1A1A2E; }
         .skill-list { font-size: 9pt; color: #333; }
-        .education-item { display: flex; justify-content: space-between; margin-bottom: 6px; }
-        .edu-degree { font-weight: 600; font-size: 10pt; }
-        .edu-school { font-size: 9pt; color: #666; }
-        .edu-date { font-size: 8pt; color: #888; }
-        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .education-item { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .edu-degree { font-weight: 700; font-size: 10.5pt; color: #111; }
+        .edu-school { font-size: 9.5pt; color: #444; }
+        .edu-date { font-size: 8.5pt; color: #777; font-weight: 600; }
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
       </style>
     </head>
     <body>

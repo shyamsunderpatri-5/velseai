@@ -30,9 +30,6 @@ export function LanguageSwitcher() {
   }, []);
 
   const handleLocaleChange = async (newLocale: Locale) => {
-    const pathWithoutLocale = '/' + pathname.split('/').slice(2).join('/');
-    const newPath = `/${newLocale}${pathWithoutLocale || '/'}`;
-    
     // Save to cookie for 1 year
     const cookieDate = new Date();
     cookieDate.setFullYear(cookieDate.getFullYear() + 1);
@@ -49,7 +46,8 @@ export function LanguageSwitcher() {
       // Ignore errors - cookie still works
     }
     
-    router.replace(newPath);
+    // Use the hardened absolute router to swap the locale
+    router.replace(pathname, newLocale);
     setCurrentLocale(newLocale);
     setIsOpen(false);
   };
