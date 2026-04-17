@@ -36,6 +36,9 @@ export const ATSScoreResultSchema = z.object({
   keyword_frames: z.array(KeywordFrameSchema).optional(),
   suggestions: z.array(ATSSuggestionSchema),
   summary: z.string(),
+  seniority_score: z.number().int().min(0).max(100).optional(),
+  seniority_fit: z.boolean().optional(),
+  seniority_reason: z.string().optional(),
 });
 
 export type ATSScoreResult = z.infer<typeof ATSScoreResultSchema>;
@@ -264,32 +267,54 @@ export type AIChatResponse = z.infer<typeof AIChatResponseSchema>;
  * For production, consider using 'zod-to-json-schema' npm package.
  */
 export function zodToJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  if (typeof schema === "string") return { type: "string" };
+  
   const s = schema as any;
-  if (s._def?.typeName === 'ZodObject' || typeof s.shape === 'object') {
+  const def = s._def || {};
+  const kind = def.typeName || def.type;
+
+  // Handle recursion into Arrays
+  if (kind === 'ZodArray' || kind === 'array') {
+    const items = def.element || def.type; // Extract element correctly for Zod 4
+    return { 
+      type: "array", 
+      items: typeof items === "object" ? zodToJsonSchema(items) : { type: "string" } 
+    };
+  }
+
+  // Handle recursion into Objects
+  if (kind === 'ZodObject' || kind === 'object' || typeof s.shape === 'object') {
     const properties: Record<string, unknown> = {};
     const required: string[] = [];
-    const shape = s.shape || s._def?.shape?.() || {};
+    const shape = s.shape || def.shape || (typeof def.shape === 'function' ? def.shape() : {});
+    
     for (const [key, value] of Object.entries(shape)) {
       properties[key] = zodToJsonSchema(value as z.ZodTypeAny);
-      const v = value as z.ZodTypeAny;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((v as any)._def?.typeName !== 'ZodOptional') {
+      const v = value as any;
+      const vKind = v._def?.typeName || v._def?.type || v.type;
+      if (vKind !== 'ZodOptional' && vKind !== 'optional') {
         required.push(key);
       }
     }
     return { type: "object", properties, required };
   }
-  if (s._def?.typeName === 'ZodArray') {
-    return { type: "array", items: zodToJsonSchema(s._def.type) };
+
+  // Handle Enums
+  if (kind === 'ZodEnum' || kind === 'enum') {
+    return { type: "string", enum: def.values || s.options || [] };
   }
-  if (s._def?.typeName === 'ZodEnum') {
-    return { type: "string", enum: s._def.values || s.options };
+
+  // Handle Wrappers (Optional, Default, Nullable)
+  if (def.innerType) {
+    return zodToJsonSchema(def.innerType);
   }
-  if (s._def?.typeName === 'ZodOptional') {
-    return zodToJsonSchema(s._def.innerType || s.unwrap?.());
+  if (s.unwrap) {
+    return zodToJsonSchema(s.unwrap());
   }
-  if (s._def?.typeName === 'ZodBoolean') return { type: "boolean" };
-  if (s._def?.typeName === 'ZodNumber') return { type: "number" };
+
+  // Primitives
+  if (kind === 'ZodBoolean' || kind === 'boolean') return { type: "boolean" };
+  if (kind === 'ZodNumber' || kind === 'number') return { type: "number" };
+  
   return { type: "string" };
 }

@@ -26,6 +26,24 @@ export function DeepAnalysisSection({
       {/* Action Header: Viral Sharing & Tailoring Block */}
       {!fixResult && (
         <div className="flex flex-col md:flex-row gap-4 mb-8">
+          {result.overall_score < 80 ? (
+            <Button 
+              onClick={() => window.location.href = '/resume-builder'}
+              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-emerald-600/30 transition-transform hover:scale-[1.01]"
+            >
+              🚀 Build Optimized Resume (Auto-Fix)
+            </Button>
+          ) : (
+            <Button 
+              onClick={onGenerateProtocol}
+              disabled={isGenerating}
+              className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white h-14 rounded-2xl gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-violet-600/30 transition-transform hover:scale-[1.01]"
+            >
+              {isGenerating ? <Spinner className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 font-bold" />}
+              {isGenerating ? "Synthesizing Protocol..." : "Generate Optimization Protocol"}
+            </Button>
+          )}
+
           <Button 
             variant="outline" 
             onClick={() => {
@@ -35,14 +53,6 @@ export function DeepAnalysisSection({
             className="flex-1 bg-white/5 border-white/10 text-white h-14 rounded-2xl gap-3 font-bold uppercase text-[11px] tracking-widest hover:bg-white/10"
           >
              Share Protocol Score
-          </Button>
-          <Button 
-            onClick={onGenerateProtocol}
-            disabled={isGenerating}
-            className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white h-14 rounded-2xl gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-violet-600/30 transition-transform hover:scale-[1.01]"
-          >
-            {isGenerating ? <Spinner className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 font-bold" />}
-            {isGenerating ? "Synthesizing Protocol..." : "Generate Optimization Protocol"}
           </Button>
         </div>
       )}

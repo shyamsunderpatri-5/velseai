@@ -39,26 +39,6 @@ const navItems = [
     icon: Target,
   },
   {
-    title: "Interview Coach",
-    href: "/interviews",
-    icon: MessageSquare,
-  },
-  {
-    title: "Pro Library",
-    href: "/templates",
-    icon: BookOpen,
-  },
-  {
-    title: "Job Tracker",
-    href: "/jobs",
-    icon: Briefcase,
-  },
-  {
-    title: "AI Tools",
-    href: "/ai-tools",
-    icon: Sparkles,
-  },
-  {
     title: "Settings",
     href: "/settings",
     icon: Settings,

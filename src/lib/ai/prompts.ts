@@ -126,8 +126,8 @@ export function getATSImprovementPrompt(params: {
     ? `\n\n### KEYWORD INJECTION (Sentence Frames)\nThe resume is missing the following critical keywords: ${params.missingKeywords.join(', ')}.\nExamine the user's existing "Resume" to find a relevant project, role, or skill cluster. Formulate a highly specific, ready-to-copy "sentence_frame" bullet point for EACH missing keyword that seamlessly injects the keyword into the context of what they have already done.`
     : '';
 
-  return `### ROLE: Senior Technical Recruiter & ATS Architect (Ex-FAANG)
-### MISSION: Perform a rigorous, 5-stage audit of the candidate's resume against the Job Description. Provide exact sentence frames to inject missing intelligence.${langInstruction}
+  return `### ROLE: Senior Recruiter & ATS Auditor (Ex-FAANG)${langInstruction}
+### MISSION: Audit resume against JD. Provide exact sentence frames for missing keywords.
 
 RESUME:
 ${params.resumeText}
@@ -136,44 +136,24 @@ JOB DESCRIPTION:
 ${params.jobDescription}
 
 ### AUDIT PROTOCOL:
-1. **Seniority Fit Calculation (CRITICAL)**:
-   - Identify years of experience in the Resume. 
-   - Identify years required in the JD.
-   - If Found is > 4 years more than Required AND Required is <= 3 (Junior role), flag this as a "Mismatched Seniority Profile (Over-qualified)."
-2. **KPI & Impact Verification**:
-   - Audit every bullet point for "Quantified Results" ($, %, #). 
-   - Low impact = Penalty.
-3. **Keyword Density & Stuffing**:
-   - Calculate if keywords appear naturally. Flag if density exceeds 12% as "Potential AI Stuffing."
-4. **Formatting \"Red Flags\"**:
-   - Detect signs of tables, images, or multi-column layouts that break legacy ATS systems.
-5. **US/Canada Conciseness Audit**:
-   - Audit for excessive length. Resumes > 2 pages (approx 1000 words) are a "High Risk" for North American recruiters.
-   - Identify "Clutter sections" (summaries that are too long, redundant skills, excessive hobby lists).${keywordInstruction}
+1. Seniority Fit: Extract years of experience. Compare to JD. Flag if too junior or >4yrs over Required.
+2. KPI Audit: Check for quantified results ($, %, #).
+3. Density: Flag if keyword density >12% (AI Stuffing).
+4. Formatting: Detect red flags (tables, images, columns).
+5. Length: Flag if >2 pages (~1000 words).${keywordInstruction}
 
-### OUTPUT REQUIREMENTS (Return valid JSON ONLY):
+### OUTPUT REQUIREMENTS (Valid JSON ONLY):
 {
-  "overall_score": 0-100 (Be critical, match the Recruiter's perspective),
-  "summary": "2-3 sentences of blunt, expert feedback on the candidate's fit.",
-  "suggestions": [
-    {
-      "category": "keywords|format|experience|skills|general",
-      "priority": "high|medium|low",
-      "message": "Specific, actionable fix",
-      "action": "short command e.g., 'Add KPI metrics'"
-    }
-  ],
-  "keyword_frames": [
-    {
-      "keyword": "missing keyword name",
-      "sentence_frame": "Ready-to-copy bullet point, e.g.: Engineered a scalable cloud integration using AWS..."
-    }
-  ]
+  "overall_score": 0-100,
+  "summary": "2-3 sentences of blunt feedback.",
+  "seniority_fit": boolean,
+  "seniority_reason": "e.g., '6yrs for 2-5yr role'",
+  "suggestions": [{ "category": "keywords|format|experience|skills|general", "priority": "high|medium|low", "message": "fix", "action": "cmd" }],
+  "keyword_frames": [{ "keyword": "name", "sentence_frame": "bullet point" }]
 }
 
 ### FINAL RULES:
-- Be strict. Do not give 100% unless it is perfect.
-- If Over-qualified for a junior role, score cannot exceed 65.
+- Be strict. Do not give 100% unless perfect.
 - Return ONLY JSON. No conversation.`;
 }
 

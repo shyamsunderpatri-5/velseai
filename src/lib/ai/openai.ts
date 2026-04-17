@@ -37,6 +37,7 @@ export async function generateStructuredWithOpenAI<T>(
   options?: {
     model?: string;
     temperature?: number;
+    maxTokens?: number;
   }
 ): Promise<T> {
   const client = getOpenAIClient();
@@ -51,6 +52,7 @@ export async function generateStructuredWithOpenAI<T>(
       { role: "user", content: prompt }
     ],
     temperature: options?.temperature ?? 0.3,
+    max_tokens: options?.maxTokens ?? 1024,
     response_format: { type: "json_object" },
   });
 

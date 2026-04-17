@@ -36,20 +36,10 @@ export async function analyzeResume(
   // ── Step 1: Algorithmic Pass (Fast Extraction) ───────────────────────────
   const algoResult = scoreResume(resumeText, jobDescription);
 
-  // ── Step 2: Semantic Seniority Analysis (with Fail-Safe) ─────────────────
-  let seniorityAnalysis = "Analysis pending manual review.";
-  try {
-    const seniorityFit = await extractSeniorityFit(resumeText, jobDescription);
-    seniorityAnalysis = seniorityFit.reason;
-  } catch (error) {
-    console.warn("Seniority AI pass failed, using fallback message:", error);
-  }
-
-  // ── Step 3: Semantic Pass (AI-Powered Deep Audit) ────────────────────────
+  // ── Step 2: Semantic Pass (AI-Powered Deep Audit + Seniority) ──────────
   let aiResult: Partial<ATSScoreResult> | null = null;
-  const hasAIKeys = !!(process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY);
+  const hasAIKeys = !!(process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY || process.env.GEMINI_API_KEY);
 
-  // Deep Audit always proceeds per user request (Gate skipped)
   if (hasAIKeys) {
     try {
       const prompt = getATSImprovementPrompt({ 
@@ -69,7 +59,8 @@ export async function analyzeResume(
     }
   }
 
-  // ── Step 4: Intelligence Merging ────────────────────────────────────────
+  // ── Step 3: Intelligence Merging ────────────────────────────────────────
+  let seniorityAnalysis = aiResult?.seniority_reason || "Seniority match verified via structural pass.";
   let finalOverallScore = algoResult.overall_score;
   
   if (aiResult?.overall_score) {

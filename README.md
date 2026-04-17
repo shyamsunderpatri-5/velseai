@@ -1,133 +1,102 @@
-# VELSEAI — AI Career Co-Pilot (Global SaaS)
+# VELSEAI — Intelligence Advisory Protocol
 
-<p align="center">
-  <strong>Beat the ATS. Land jobs. From anywhere.</strong>
-</p>
-
-<p align="center">
-  VelseAI is a world-class, technical-first career platform designed to help candidates dominate the North American and European job markets. We combine AI-powered resume optimization, real-time mock interviews, and automated ecosystem tools to turn job seekers into hired professionals.
-</p>
-
-<p align="center">
-  <a href="https://velseai.com">velseai.com</a> •
-  <a href="#features">Features</a> •
-  <a href="#pricing">Pricing</a> •
-  <a href="#tech-stack">Tech Stack</a> •
-  <a href="#getting-started">Getting Started</a>
-</p>
+VelseAI is a technical, AI-driven SaaS platform engineered to help professionals bypass strict Applicant Tracking Systems (ATS). Unlike traditional "Resume Builders" that generate templated PDFs, VelseAI operates as an **Intelligence Advisory Engine**. It ingests a user's existing resume, cross-references it against a target Job Description (JD), and outputs highly customized, ready-to-copy "Sentence Frames" designed to inject missing keywords naturally.
 
 ---
 
-## Features
+## 🏗 High-Level Design (HLD)
 
-### 🎯 Pro ATS Checker
-- **Deep Analysis Protocol**: Proprietary scoring engine (Keywords, Format, Skills, Experience).
-- **Keyword Intelligence**: One-click detection of missing technical terms with severity mapping.
+VelseAI operates on a modern, serverless architecture optimized for high-speed AI inference and deterministic output generation.
 
-### 🧠 Intelligence Advisory Engine (Replaced Legacy Builders)
-- **Contextual Sentence Frames**: Instead of generating templated PDFs, VelseAI generates highly customized, copy-pasteable bullet points that inject missing keywords seamlessly into your existing experience.
-- **Multilingual AI Strategy**: Full support for evaluating resumes in English, German, French, Spanish, Portuguese, and Arabic.
-- **Authenticity Proofing**: Detects "keyword stuffing" and overly generic AI phrasing.
-
-### 🤖 AI Technical Interview Engine
-- **Mock Interviews**: Interactive technical rounds (DSA/System Design) with a Senior Lead AI.
-- **Growth Roadmap**: Automatically identifies skill gaps and builds a personalized learning path with resources.
-
-### 🔌 VelseAI Chrome Extension
-- **Instant Sync**: Capture jobs from LinkedIn and Indeed directly into your VelseAI dashboard.
-- **JD Extraction**: High-accuracy parsing of job requirements from any web page.
-
-### 💼 Career Co-Pilot Hub
-- **Job Application Tracker**: Kanban pipeline with automated follow-up alerts.
-- **WhatsApp/Telegram Integration**: Receive job matches and application alerts on your phone.
-- **Public Bio-Link Portfolio**: A professional public page (`/u/username`) with a secure recruiter bridge.
+1.  **Frontend Layer**: Next.js 16 (App Router) client handling localized UI, form ingestion, and complex visual data representation (Radar Charts, ATS Score Gauges).
+2.  **Auth & Database Layer**: Supabase handles enterprise-grade JWT sessions, PostgreSQL data persistence (User Profiles, Scans, Usage Quotas), and Row Level Security (RLS).
+3.  **Application Logic (The Proxy)**: A localized `proxy.ts` bridges Next.js routing requirements, resolving legacy middleware conflicts and securing dashboard routes based on session validity.
+4.  **Intelligence Engine Layer**: 
+    *   **Deterministic Pass**: Fast RegExp-based extraction to instantly identify missing skills/keywords (`src/lib/ats/scorer.ts`).
+    *   **Semantic AI Pass**: Uses Groq (for ultra-fast token streaming) and OpenAI GPT-4o for deep contextual understanding. The AI reads the missing keywords and generates customized "Sentence Frames" based on the user's specific past experience.
+5.  **Telemetry & Monetization Layer**: PostHog captures fine-grained analytics on feature usage. Stripe handles the localized "$9 Sprint Pass" checkout flows.
 
 ---
 
-## ⏳ What is pending (Phase 5: Enterprise & Market Maturity)
+## ⚙️ Low-Level Design (LLD)
 
-To transform VelseAI into a tier-1 global SaaS leader, we are prioritizing these items for our next milestone:
+### Data Models & Schemas (Supabase Postgres)
+-   `users / profiles`: Core auth and subscription tier (Free, Sprint Pass).
+-   `resumes`: Stores parsed text, raw JSON representations, and metadata.
+-   `ai_usage`: Tracks token consumption and feature usage (e.g., "ATS Check", "Mock Interview") for rate-limiting.
 
-*   **Performance Review Synthesizer (Brag Document)**: Retain hired users by allowing them to drop weekly messy notes, automatically generating their annual performance review or updating their passive resume.
-*   **"Passive Bait" LinkedIn Autobomber**: AI that drips optimal keywords into your LinkedIn profile to constantly trigger recruiter algorithms while you're employed.
-*   **Offer & Equity Negotiation Protocol**: Paste your job offer, and the AI evaluates market data to generate the exact aggressive email required to secure a 15% salary increase.
-*   **Referral Dashboard**: A dedicated portal for users to track referrals and earn free "Sprint Passes."
-*   **Market Intelligence (Salary Benchmarking)**: Real-time salary data for major US/Canada hubs integrated directly into the dashboard.
-*   **AI Voice Integration**: Real-time "Listen & Speak" mode using OpenAI's Realtime API for immersive, low-latency mock interviews.
+### Core Modules (`src/lib/`)
+-   **`/lib/ats/engine.ts`**: The orchestrator. Combines the deterministic output (`scoreResume`) with the AI semantic output to generate an overall algorithmic score (0-100).
+-   **`/lib/ai/prompts.ts`**: The central repository for all LLM context instructions, including the `getATSImprovementPrompt` which commands the AI to build tailored keyword sentences.
+-   **`/lib/ai/structured-outputs.ts`**: Comprehensive Zod schemas (e.g., `ATSScoreResultSchema`). We use OpenAI's Structured Outputs mechanism to guarantee the API returns perfect, typed JSON arrays containing our customized sentence frames.
+-   **`/lib/ai/groq.ts`**: A wrapper prioritizing the Groq API (Llama3/Mixtral) for low-latency tasks like single-bullet rewrites, while falling back to OpenAI natively for deeper reasoning.
 
----
-
-## Tech Stack
-
-- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS, Framer Motion
-- **Backend**: Next.js API Routes + Supabase (PostgreSQL + RLS + Auth + Storage)
-- **AI Engine**: Groq LPU (Ultra-Fast Parsing) + OpenAI GPT-4o (Deep Analysis)
-- **Ecosystem**: Chrome Extension (Manifest v3, Content Scripts, Background Workers)
-- **Automation**: Cron-based job alerts (WhatsApp/Telegram Webhooks)
-- **Payments**: Stripe Global Integration (USD/CAD Focus)
+### Key Components (`src/components/ats/`)
+-   **`DeepAnalysisSection.tsx`**: Renders the complete breakdown of the intelligence gap.
+-   **`MissingIntelligenceTable.tsx`**: Dynamically maps over `missingKeywords`. It intersects the raw missing keyword strings with the AI-generated `keyword_frames` to display custom, copy-pasteable bullet advice.
+-   **`ScoreRadarChart.tsx`**: Uses `framer-motion` to plot multi-JD viral comparisons.
+-   **Zustand Stores (`comparisonStore.ts`)**: Manages the transient state when comparing a single resume against multiple Job Descriptions concurrently.
 
 ---
 
-## Pricing (North American Market)
+## 🛠 Tech Stack & Dependencies
 
-| Plan | Price | Features |
-|------|-------|----------|
-| **Trial** | $0 | 1 Basic ATS Check, Limited Analysis Visibility |
-| **Sprint Pass** | $9/30-days | Unlimited Intelligence Audits, Full AI Protocol Unlock, No Auto-Renewal |
-| **Career Dominion** | $49/yr | For passive job seekers: Auto-updating Brag Documents, Continuous LinkedIn Optimization advice |
+### Core Frameworks
+-   **Next.js (16.2.3)**: React framework with App Router topology.
+-   **React (19.2.4)**: UI Component logic.
+-   **TypeScript (5.x)**: Strict typing throughout the architecture.
+
+### UI & Styling
+-   **Tailwind CSS (v4)**: Core utility classes.
+-   **Framer Motion (12.38.0)**: Complex mounting animations for scores and radar charts.
+-   **Radix UI**: Headless accessible primitives (`@radix-ui/react-dialog`, `tabs`, `progress`, `switch`, `toast`).
+-   **Lucide React (1.8.0)**: Consistent SVG iconography toolkit.
+
+### AI & Intelligence
+-   **OpenAI SDK (6.34.0)**: Main interface for GPT-4o structured outputs.
+-   *(Implicit)* **Groq**: Rapid inference API integration for high-speed deterministic JSON generation.
+-   **Zod (4.3.6)**: Schema validation and structured output mapping.
+-   **Replicate (1.4.0)**: Hooked in for optional feature sets (AI Headshots).
+
+### Database & Auth
+-   **Supabase SSR (0.10.2) & Supabase-JS (2.103.0)**: PostgreSQL DB interactions, Edge Functions, Auth cookies.
+
+### Parsers & Extractors
+-   **Mammoth (1.12.0)**: `.docx` parsing for converting user uploads into raw ingestible text.
+-   **PDF-Parse (2.4.5)**: Extracting text from standard `.pdf` uploads.
+-   *(Note: Legacy `puppeteer` and `pdf-lib` exist in the `package.json` from Phase 1 builder architectures, but generation was stripped in favor of the Advisory format).*
+
+### Telemetry & Business
+-   **PostHog JS/Node**: Event tracking and user flow optimization.
+-   **Stripe (22.0.1)**: Financial integration and checkout session generation.
+-   **Nodemailer (8.0.5)**: Transactional email (Waitlists, Alerts).
+
+### Best Practices & Code Quality
+-   **Zustand (5.0.12)**: Lightweight global state (preferable to Redux).
+-   **React Hook Form (7.72.1) + @hookform/resolvers (5.2.2)**: Performant, type-safe form validation bridging perfectly with Zod.
+-   **Sentry NextJS (10.48.0)**: Production crash reporting and boundary detection.
 
 ---
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- Supabase account (PostgreSQL)
-- OpenAI API Key
-
-### Installation
+## 🚀 Setup & Execution
 
 ```bash
-# Clone the repository
+# Clone the Core Asset
 git clone https://github.com/shyamsunderpatri-5/velseai.git
 cd velseai
 
-# Install dependencies
+# Install Dependencies
 npm install
 
-# Setup environment variables
-cp .env.example .env.local
-```
-
-### Environment Variables (.env)
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
+# Initialize Environment (.env.local)
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_key
 OPENAI_API_KEY=your_openai_key
-STRIPE_SECRET_KEY=your_stripe_key
-```
+STRIPE_SECRET_KEY=your_stripe_secret
+NEXT_PUBLIC_POSTHOG_KEY=your_posthog_key
 
-### Run Locally
-```bash
+# Boot Development Server
 npm run dev
 ```
 
----
-
-## Project Structure
-```
-velseai/
-├── extension/          # Chrome Extension source
-├── src/
-│   ├── app/            # App Router (Next.js 16)
-│   ├── components/     # UI Components (shadcn)
-│   ├── lib/            # Shared Logic (AI, Payments, PDF)
-│   └── i18n/           # Internationalization config
-├── supabase/           # SQL Migrations & Schema
-└── public/             # Static Assets
-```
-
----
-
-## Built with ❤️ for world-class talent
-**VELSEAI — Beat the ATS. Land jobs. From anywhere.**
+**System Output Guarantee**: By design, the architecture guarantees that a VelseAI generated audit produces mathematically perfect Zod-aligned AI responses, eliminating JSON parse failures in production.
