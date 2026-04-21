@@ -1,0 +1,134 @@
+/* 
+   PREMIUM CV STYLESHEET (CAREER-OPS EDITION)
+   Fonts: Space Grotesk (Headings) + DM Sans (Body)
+   Aesthetic: Institutional, minimalist, high-contrast.
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Space+Grotesk:wght@300..700&display=swap');
+
+:root {
+  --cv-primary: #000000;
+  --cv-accent: #5b21b6; /* Violet-800 */
+  --cv-text: #1a1a1a;
+  --cv-muted: #666666;
+  --cv-border: #e5e7eb;
+}
+
+@media print {
+  @page {
+    margin: 1.25cm;
+    size: A4;
+  }
+}
+
+.premium-cv {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--cv-text);
+  line-height: 1.5;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+}
+
+.premium-cv h1, 
+.premium-cv h2, 
+.premium-cv h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  color: var(--cv-primary);
+}
+
+.premium-cv h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  line-height: 1;
+}
+
+.premium-cv .contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cv-muted);
+  margin-bottom: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.premium-cv .section-header {
+  border-bottom: 2px solid var(--cv-primary);
+  padding-bottom: 0.25rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.premium-cv .experience-item {
+  margin-bottom: 1.5rem;
+}
+
+.premium-cv .item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.25rem;
+}
+
+.premium-cv .item-title {
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+.premium-cv .item-company {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  color: var(--cv-accent);
+  font-size: 0.9rem;
+}
+
+.premium-cv .item-date {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cv-muted);
+}
+
+.premium-cv ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.premium-cv li {
+  position: relative;
+  padding-left: 1.25rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+}
+
+.premium-cv li::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: var(--cv-accent);
+  font-weight: bold;
+}
+
+.premium-cv .skills-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.premium-cv .skill-category {
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
+}
+
+.premium-cv .skill-list {
+  font-size: 0.85rem;
+}

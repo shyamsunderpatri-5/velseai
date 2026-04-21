@@ -38,6 +38,9 @@ export interface JobApplication {
   ats_score: number | null;
   match_score: number | null;
   match_reasons: { factor: string; impact: string; detail: string }[] | null;
+  audit_score: number | null; // 0.0 - 5.0
+  audit_grade: string | null; // A-F
+  audit_report: any | null; // JSON structure from NeuralAuditResult
   source: JobSource;
   external_job_id: string | null;
   created_at: string;

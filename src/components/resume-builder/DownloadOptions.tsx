@@ -12,9 +12,11 @@ interface DownloadOptionsProps {
   hasCoverLetter: boolean;
   onGenerateCoverLetter: () => void;
   candidateName: string;
+  resumeData?: any;
+  templateId?: string;
 }
 
-export function DownloadOptions({ isPro, hasResume, hasCoverLetter, onGenerateCoverLetter, candidateName }: DownloadOptionsProps) {
+export function DownloadOptions({ isPro, hasResume, hasCoverLetter, onGenerateCoverLetter, candidateName, resumeData, templateId }: DownloadOptionsProps) {
   const [downloadingResume, setDownloadingResume] = useState(false);
   const [downloadingCl, setDownloadingCl] = useState(false);
 
@@ -24,7 +26,7 @@ export function DownloadOptions({ isPro, hasResume, hasCoverLetter, onGenerateCo
     if (!isPro) return;
     setDownloadingResume(true);
     try {
-      await generatePdfFromHtml("resume-pdf-container", `${safeName}_Optimized_Resume`);
+      await generatePdfFromHtml(resumeData, `${safeName}_Optimized_Resume`, templateId);
     } catch (e) {
       console.error(e);
       alert("Failed to build PDF. Please try again.");

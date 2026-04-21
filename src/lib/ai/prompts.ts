@@ -33,10 +33,11 @@ ${params.keywords ? `- Important keywords to include: ${params.keywords.join(', 
 
 Requirements:
 - Start with action verbs (Led, Built, Developed, Increased, Reduced, etc.)
-- Use numbers/metrics where possible (%, $, X increase, etc.)
+- Use numbers/metrics ONLY if they are mentioned in the original context (Do NOT invent percentages or dollar amounts)
+- NEVER add skills or technologies the user does not possess
 - Keep each bullet to 1-2 lines
-- Focus on achievements, not just duties
-- ATS-friendly: include relevant keywords naturally
+- Focus on accomplishments based on the USER'S REAL data
+- ATS-friendly: include relevant keywords ONLY if they are truthful to the user's background
 
 Respond with just the 3 bullet points, one per line, no numbering.`;
 }
@@ -59,10 +60,11 @@ Write a professional summary (2-3 sentences) for:
 
 Requirements:
 - First person (I am, I have, I specialize)
-- Highlight years of experience and key strengths
+- Highlight years of experience and key strengths based ONLY on the data above
+- ZERO FABRICATION: Do not add job titles, skills, or seniorities that weren't provided
 - End with what value you bring to employers
 - Keep under 50 words
-- ATS-friendly with relevant keywords`;
+- ATS-friendly with relevant keywords naturally integrated`;
 }
 
 export function getCoverLetterPrompt(params: {
@@ -153,6 +155,8 @@ ${params.jobDescription}
 }
 
 ### FINAL RULES:
+- ZERO HALLUCINATION: NEVER suggest a "sentence_frame" that claims a skill or project the user hasn't mentioned in the source resume.
+- If a keyword is completely missing and cannot be truthfully added, do not force it into a frame. Instead, mention it as a missing skill in suggestions.
 - Be strict. Do not give 100% unless perfect.
 - Return ONLY JSON. No conversation.`;
 }
@@ -181,9 +185,9 @@ Provide:
 
 Format as:
 - ANALYSIS: [2-3 sentences]
-- CHANGES NEEDED: [5 bullet points]
-- KEYWORDS TO ADD: [list]
-- REWRITTEN BULLETS: [3 best bullets rewritten]`;
+- CHANGES NEEDED: [5 bullet points, do NOT suggest adding skills the user doesn't have]
+- KEYWORDS TO ADD: [list only if they relate to existing work]
+- REWRITTEN BULLETS: [3 best bullets rewritten for tone/clarity, NO fabrication]`;
 }
 
 export function getInterviewQuestionsPrompt(params: {
@@ -360,11 +364,12 @@ Return a JSON object with EXACTLY this structure:
 }
 
 Rules:
-- NEVER fabricate experience or skills the user doesn't have — only rephrase and reframe
-- Use strong action verbs: Led, Built, Architected, Delivered, Optimized, Scaled
-- Add quantified metrics wherever possible (estimate if needed: "~20%", "team of 5")
-- Keywords must appear NATURALLY, not as a list dump
-- Prioritize the top 3 most impactful bullets for maximum ATS improvement
+- STRICT INTEGRITY: NEVER fabricate experience, companies, or skills the user doesn't have.
+- NO NEW SKILLS: If a missing keyword represents a technology the user has never used, do NOT add it.
+- Use strong action verbs: Led, Built, Architected, Delivered, Optimized, Scaled.
+- Add quantified metrics ONLY if they are in the original or can be reasonably inferred (Do NOT invent "50% increase" if the user didn't mention growth).
+- Keywords must appear NATURALLY, not as a list dump.
+- Prioritize the top 3 most impactful bullets for maximum ATS improvement.
 - Return ONLY valid JSON, no explanation`;
 }
 
@@ -607,3 +612,184 @@ Rules:
 - Logic errors (e.g., Working at two full-time roles in different cities simultaneously) should trigger "high_risk".
 - Return ONLY valid JSON.`;
 }
+
+/**
+ * Neural Audit Prompt (Consolidated Intelligence)
+ * Evaluates 10 weighted dimensions and detects archetypes.
+ */
+export function getNeuralAuditPrompt(params: {
+  resumeText: string;
+  jobDescription: string;
+  companyInfo?: string;
+  locale: string;
+}): string {
+  const langInstruction = getLanguageInstruction(params.locale);
+  return `### ROLE: Senior Career Intelligence Auditor & Talent Strategy Expert${langInstruction}
+### MISSION: Perform a Deep Protocol Audit of a job opportunity across 10 weighted dimensions.
+
+RESUME CONTEXT:
+${params.resumeText.slice(0, 4000)}
+
+JOB DESCRIPTION:
+${params.jobDescription.slice(0, 6000)}
+
+${params.companyInfo ? `COMPANY INTELLIGENCE:\n${params.companyInfo}` : ''}
+
+### AUDIT PROTOCOL (10 DIMENSIONS):
+- **Step 1: Archetype Detection**. Classify the role into one of the 6 key arquetipos:
+  - **FDE (Forward Deployed Engineer)**: Prioritize delivery speed, client-facing, and integration.
+  - **SA (Solutions Architect)**: Prioritize system design, trade-offs, and scalability.
+  - **PM (Product Manager)**: Prioritize discovery, metrics, and roadmap.
+  - **LLMOps**: Prioritize evals, observability, and production pipelines.
+  - **Agentic**: Prioritize multi-agent, HITL, and orchestration.
+  - **Transformation**: Prioritize change management and enterprise adoption.
+
+- **Step 2: Match Audit (Block B)**. Map JD requirements to CV proof points.
+  - For FDE -> focus on rapid delivery.
+  - For SA -> focus on architecture decisions.
+  - For Agentic -> focus on orchestration and error handling.
+- **Step 3: Level & Strategy (Block C)**.
+  - Detect "Natural Level" vs "JD Level".
+  - "Founder Leverage": How to position previous entrepreneurial experience as an asset for this specific archetype.
+- **Step 4: Interview Stories (Block F)**. Generate 6-10 STAR+R stories.
+  - The **Reflection** must signal seniority. Juniors talk about what happened; Seniors talk about what was learned.
+8.  **Flexibility**: True remote/hybrid policy vs JD claims.
+9.  **Function Fit**: Build vs Maintain vs Research.
+10. **Culture Fit**: Team size, reporting structure, and values.
+
+### DETECT ARCHETYPE:
+Identify if this is: [Seed-Stage FDE, Early-Stage IC, Scaling Unicorn, Enterprise Architect, Specialized Consultant, R&D/Agentic Engineer].
+
+### FINAL GRADING:
+- 4.5 - 5.0: Grade A (Elite Match - Apply Immediately)
+- 4.0 - 4.4: Grade B (Strong Match - Recommended)
+- 3.5 - 3.9: Grade C (Average Match - Manual Review)
+- < 3.5: Grade D/F (Weak Match - Avoid / High Risk)
+
+### OUTPUT REQUIREMENTS (Valid JSON ONLY):
+{
+  "overall_grade": "A|B|C|D|F",
+  "overall_score": 0.0-5.0,
+  "archetype": "Detected Archetype",
+  "legitimacy_tier": "High Confidence|Proceed with Caution|Suspicious",
+  "dimensions": [
+    { "name": "Role Match", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Company Health", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Compensation", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Growth", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Tech Stack", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Seniority", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Legitimacy", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Flexibility", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Function", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] },
+    { "name": "Culture", "score": 0-10, "grade": "A-F", "pros": [], "cons": [] }
+  ],
+  "strategic_advice": "1 sentence on HOW to position yourself for this specific archetype.",
+  "red_flags": ["list of red flags if any"],
+  "interview_master_stories": [
+    {
+      "title": "Story Title",
+      "situation": "...",
+      "task": "...",
+      "action": "...",
+      "result": "...",
+      "reflection": "...",
+      "themes": ["Leadership", "Impact"]
+    }
+  ]
+}
+
+### RULES:
+- If legitimacy_tier is "Suspicious", drop the overall score significantly.
+- Be brutal. Senior candidates expect honesty.
+- RETURN ONLY JSON.`;
+}
+
+/**
+ * LINKEDIN OUTREACH PROMPT
+ */
+export const getOutreachPrompt = (
+  candidateName: string,
+  targetName: string,
+  targetType: "Recruiter" | "Hiring Manager" | "Peer" | "Interviewer",
+  jobTitle: string,
+  companyName: string,
+  highlights: string[]
+) => `
+You are an expert at high-conversion LinkedIn networking.
+Generate a 3-phrase message for \${targetName} (\${targetType}) regarding the \${jobTitle} role at \${companyName}.
+
+CONTEXT:
+Candidate: \${candidateName}
+Role: \${jobTitle} at \${companyName}
+Top Proof Points: \${highlights.join(", ")}
+
+RULES:
+1. MAX 300 CHARACTERS. No exceptions.
+2. NO corporate-speak ("I am writing to express my interest").
+3. NO "I'm passionate about".
+4. Tone: High-status, peer-to-peer, specific.
+
+STRUCTURE (3 PHRASES):
+Phrase 1: Hook (Role fit for Recruiter, Team challenge for HM, Genuine work ref for Peer).
+Phrase 2: The Proof (Specific, quantified achievement).
+Phrase 3: CTA (No ask for job, ask for alignment or shared interest).
+
+OUTPUT:
+JSON format: { "message": "..." }
+`;
+
+/**
+ * NEGOTIATION SCRIPT PROMPT
+ */
+export const getNegotiationPrompt = (
+  role: string,
+  company: string,
+  level: string,
+  gaps: string[],
+  leveragePoints: string[]
+) => `
+You are a senior salary negotiator. Generate a 3-block negotiation script.
+
+CONTEXT:
+Role: \${role} at \${company} (Level: \${level})
+Gaps: \${gaps.join(", ")}
+Leverage Points: \${leveragePoints.join(", ")}
+
+GENERATE:
+1. "The High-Status Pivot": How to handle the level/comp conversation if they try to downlevel.
+2. "The Founder Leverage": How to position previous entrepreneurial experience as a risk-mitigation asset.
+3. "The Review Anchor": Script to negotiate a 6-month review if the initial base is non-negotiable.
+
+OUTPUT:
+JSON format: { "pivot": "...", "founder_leverage": "...", "review_anchor": "..." }
+`;
+
+/**
+ * PROJECT EVALUATOR PROMPT
+ */
+export const getProjectEvaluatorPrompt = (
+  projectTitle: string,
+  projectUrl: string,
+  targetRoles: string[],
+  currentSkills: string[]
+) => `
+Evaluate the ROI (Return on Investment) for this project/certification.
+
+PROJECT: \${projectTitle} (\${projectUrl})
+GOALS: \${targetRoles.join(", ")}
+CURRENT SKILLS: \${currentSkills.join(", ")}
+
+ANALYZE:
+1. Signal Strength: Does this carry weight with elite HMs (FAANG/Unicorns)?
+2. Skill Gain: Does this cover a critical gap for \${targetRoles[0]}?
+3. Portfolio Value: Is this a "generic tutorial" or a "unique proof point"?
+
+OUTPUT:
+JSON format: {
+  "score": 0-10,
+  "roi_tier": "High/Medium/Low",
+  "verdict": "1 sentence why you should or shouldn't do it.",
+  "alternative": "A better way to prove this skill."
+}
+`;

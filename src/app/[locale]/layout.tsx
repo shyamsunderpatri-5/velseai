@@ -1,6 +1,7 @@
 import { NextIntlClientProvider } from 'next-intl';
 import { Providers } from '@/components/providers/Providers';
 import { getMessages } from 'next-intl/server';
+import '../globals.css';
 import { notFound } from 'next/navigation';
 import { locales, rtlLocales, type Locale } from '@/i18n/config';
 import type { Metadata, Viewport } from 'next';

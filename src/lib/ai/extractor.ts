@@ -2,6 +2,76 @@ import { generateStructuredJSON } from "./index";
 import { z } from "zod";
 import { scoreResume } from "../ats/scorer"; // For regex fallback
 
+/**
+ * Career-Ops Zero-Token Scraper Logic
+ * Hits Greenhouse, Lever, and Ashby APIs directly.
+ */
+export async function scrapeJobDescription(url: string): Promise<{
+  title: string;
+  company: string;
+  description: string;
+  location?: string;
+} | null> {
+  try {
+    // 1. Greenhouse
+    const greenhouseMatch = url.match(/job-boards(?:\.eu)?\.greenhouse\.io\/([^/?#]+)\/jobs\/(\d+)/);
+    if (greenhouseMatch) {
+      const board = greenhouseMatch[1];
+      const jobId = greenhouseMatch[2];
+      const res = await fetch(`https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${jobId}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          title: data.title,
+          company: data.offices?.[0]?.name || "Unknown",
+          description: data.content, // HTML content
+          location: data.location?.name
+        };
+      }
+    }
+
+    // 2. Ashby
+    const ashbyMatch = url.match(/jobs\.ashbyhq\.com\/([^/?#]+)\/([^/?#]+)/);
+    if (ashbyMatch) {
+      const company = ashbyMatch[1];
+      const jobId = ashbyMatch[2];
+      const res = await fetch(`https://api.ashbyhq.com/posting-api/job-board/${company}/${jobId}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          title: data.title,
+          company: data.companyName,
+          description: data.descriptionHtml,
+          location: data.location
+        };
+      }
+    }
+
+    // 3. Lever
+    const leverMatch = url.match(/jobs\.lever\.co\/([^/?#]+)\/([^/?#]+)/);
+    if (leverMatch) {
+      const company = leverMatch[1];
+      const jobId = leverMatch[2];
+      const res = await fetch(`https://api.lever.co/v0/postings/${company}/${jobId}`);
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          title: data.text,
+          company: company,
+          description: data.descriptionHtml + data.lists.map((l: any) => `<h3>${l.text}</h3><ul>${l.content}</ul>`).join(""),
+          location: data.categories?.location
+        };
+      }
+    }
+
+    return null; // Not a supported API URL
+  } catch (error) {
+    console.error("[Scraper] Zero-token fetch failed:", error);
+    return null;
+  }
+}
+
+
 const SenioritySchema = z.object({
   candidate_years: z.number().describe("Total years of experience found in the resume"),
   jd_required: z.object({

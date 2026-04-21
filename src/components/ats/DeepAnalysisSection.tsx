@@ -5,6 +5,9 @@ import { AlertTriangle, Sparkles, Download, Loader2 as Spinner } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { MissingIntelligenceTable } from "./MissingIntelligenceTable";
 import { FixGuideTable } from "./FixGuideTable";
+import { ActiveCommandPanel } from "./ActiveCommandPanel";
+
+import { toast } from "react-hot-toast";
 
 interface DeepAnalysisSectionProps {
   result: any;
@@ -21,15 +24,44 @@ export function DeepAnalysisSection({
   isGenerating,
   lastData
 }: DeepAnalysisSectionProps) {
+  const handleDownloadPDF = async () => {
+    const companyName = lastData?.companyName || "Target";
+    try {
+      toast.loading("Generating Premium Asset...", { id: "pdf" });
+      const response = await fetch("/api/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          html: result.summary || result.mismatch_message || "Portfolio Protocol",
+          filename: `Selvo-${companyName}-Strategy.pdf`
+        })
+      });
+
+      if (!response.ok) throw new Error("PDF generation failed.");
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Selvo-${companyName}-Strategy.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Premium Asset Downloaded", { id: "pdf" });
+    } catch (error) {
+      toast.error("Failed to generate PDF asset.", { id: "pdf" });
+    }
+  };
+
   return (
     <div className="space-y-12 py-12 border-t border-white/5 animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      {/* Action Header: Viral Sharing & Tailoring Block */}
+      {/* Action Header: Primary CTA + Single Download */}
       {!fixResult && (
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           {result.overall_score < 80 ? (
             <Button 
               onClick={() => window.location.href = '/resume-builder'}
-              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-2xl gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-emerald-600/30 transition-transform hover:scale-[1.01]"
+              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white h-14 rounded-[1.5rem] gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-emerald-600/30 transition-transform hover:scale-[1.01]"
             >
               🚀 Build Optimized Resume (Auto-Fix)
             </Button>
@@ -37,7 +69,7 @@ export function DeepAnalysisSection({
             <Button 
               onClick={onGenerateProtocol}
               disabled={isGenerating}
-              className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white h-14 rounded-2xl gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-violet-600/30 transition-transform hover:scale-[1.01]"
+              className="flex-[2] bg-violet-600 hover:bg-violet-700 text-white h-14 rounded-[1.5rem] gap-3 font-black uppercase text-[11px] tracking-widest shadow-2xl shadow-violet-600/30 transition-transform hover:scale-[1.01]"
             >
               {isGenerating ? <Spinner className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5 font-bold" />}
               {isGenerating ? "Synthesizing Protocol..." : "Generate Optimization Protocol"}
@@ -45,14 +77,12 @@ export function DeepAnalysisSection({
           )}
 
           <Button 
-            variant="outline" 
-            onClick={() => {
-              const url = `/api/og/score?score=${result.overall_score}&name=${encodeURIComponent(lastData?.fullName || "Candidate")}&role=${encodeURIComponent(lastData?.jobTitle || "Professional")}`;
-              window.open(url, "_blank");
-            }}
-            className="flex-1 bg-white/5 border-white/10 text-white h-14 rounded-2xl gap-3 font-bold uppercase text-[11px] tracking-widest hover:bg-white/10"
+            onClick={handleDownloadPDF}
+            variant="outline"
+            className="flex-1 bg-white/5 border-white/10 hover:bg-white hover:text-black text-white h-14 rounded-[1.5rem] gap-3 font-black uppercase text-[11px] tracking-widest transition-all hover:scale-[1.01]"
           >
-             Share Protocol Score
+            <Download className="w-4 h-4" />
+            Download Report
           </Button>
         </div>
       )}
@@ -99,6 +129,13 @@ export function DeepAnalysisSection({
           />
         </div>
       )}
+
+      {/* Active Command Hub (New) */}
+      <ActiveCommandPanel 
+        jobTitle={lastData?.jobTitle || "Professional"}
+        companyName={lastData?.companyName || "Target Company"}
+        overallScore={result.overall_score}
+      />
     </div>
   );
 }

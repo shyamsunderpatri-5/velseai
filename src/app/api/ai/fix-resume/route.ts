@@ -86,9 +86,10 @@ Original bullet: "${bulletText}"
 
 Rules:
 - Start with a strong action verb (Led, Built, Scaled, Reduced, Launched, Architected, Delivered)
-- Include a quantifiable metric if possible (%, $, count, or estimate with ~)
+- Use numbers/metrics ONLY if they are explicitly mentioned in the original text (NEVER invent percentages or dollar amounts)
+- NEVER add skills, tools, or technologies the user does not know or mention.
 - Max 2 lines. ATS-safe language. No buzzwords.
-- Do NOT invent facts. Only rephrase and strengthen what's given.
+- STRICT INTEGRITY: Do NOT invent facts. Only rephrase and strengthen what's given. This is a very strict requirement.
 
 Return ONLY valid JSON: { "rewritten": "the new bullet", "improvement": "one sentence explaining the key change" }`;
 

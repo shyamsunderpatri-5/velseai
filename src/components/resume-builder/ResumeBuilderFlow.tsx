@@ -260,7 +260,9 @@ export function ResumeBuilderFlow({ rawResumeText, jobDescription, missingKeywor
                   hasResume={true} 
                   hasCoverLetter={!!coverLetter} 
                   onGenerateCoverLetter={handleGenerateCoverLetter} 
-                  candidateName={finalData.personal.name} 
+                  candidateName={finalData.personal.name}
+                  resumeData={finalData}
+                  templateId={targetTemplate}
                 />
               </div>
             </div>

@@ -18,7 +18,11 @@ export async function POST(req: Request) {
 
     const systemPrompt = `You are an elite resume editor. Your task is to polish the provided text to make it professional, high-impact, and metric-driven.
 Maintain the original meaning but improve wording, grammar, and impact.
-Use action verbs and quantify results if possible.
+STRICT INTEGRITY:
+- NEVER add skills, tools, or technologies the user did not provide.
+- NEVER invent new metrics, companies, or experience years.
+- Only rephrase and strengthen what is ALREADY there.
+- If the text is empty or nonsensical, return it unchanged.`;
 
 CONTEXT: ${context || "Resume content"}
 

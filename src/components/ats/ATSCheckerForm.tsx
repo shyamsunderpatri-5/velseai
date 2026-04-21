@@ -20,6 +20,11 @@ interface ATSCheckerFormProps {
   isLoading: boolean;
   error?: string | null;
   className?: string;
+  initialValue?: {
+    jobDescription?: string;
+    companyName?: string;
+    jobTitle?: string;
+  };
 }
 
 export function ATSCheckerForm({
@@ -27,6 +32,7 @@ export function ATSCheckerForm({
   isLoading,
   error,
   className,
+  initialValue,
 }: ATSCheckerFormProps) {
   const [resumeText, setResumeText] = React.useState("");
   const [resumeFile, setResumeFile] = React.useState<string | null>(null);
@@ -37,6 +43,15 @@ export function ATSCheckerForm({
   const [scrapingUrl, setScrapingUrl] = React.useState("");
   const [isScraping, setIsScraping] = React.useState(false);
   const [validationError, setValidationError] = React.useState<string | null>(null);
+
+  // Sync with initialValue for Discovery Leads
+  React.useEffect(() => {
+    if (initialValue) {
+      if (initialValue.jobDescription) setJobDescription(initialValue.jobDescription);
+      if (initialValue.companyName) setCompanyName(initialValue.companyName);
+      if (initialValue.jobTitle) setJobTitle(initialValue.jobTitle);
+    }
+  }, [initialValue]);
 
   const handleScrape = async () => {
     if (!scrapingUrl) return;

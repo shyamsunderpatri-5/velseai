@@ -150,8 +150,8 @@ export async function POST(request: NextRequest) {
           {
             error: "Limit Reached",
             message: userId
-              ? "You've used your 3 free account checks. Upgrade to Starter for unlimited scans."
-              : "You've used your 1 free guest check. Sign up to unlock 3 additional free scans.",
+              ? `You've used your ${maxAllowed} free account checks. Upgrade to Starter for unlimited scans.`
+              : `You've used your ${maxAllowed} free guest checks. Sign up to unlock additional free scans.`,
             remaining: 0,
             isLifetime: true,
             needsAuth: !userId

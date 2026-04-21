@@ -99,13 +99,13 @@ export function scoreResume(
   const impactScore = calculateImpactScore(resumeText);
   const readabilityScore = calculateReadabilityScore(resumeText);
 
-  // Elite Weighted Score: Metrics and Experience carry significant weight
+  // Elite Weighted Score: Optimized to reward high-quality tailoring
   const overallScore = Math.round(
-    keywordScore * 0.35 +
-      formatScore * 0.20 +
-      skillsScore * 0.15 +
-      experienceScore * 0.15 +
-      impactScore * 0.15
+    keywordScore * 0.40 +        // Keywords/Tailoring is now the primary driver
+    formatScore * 0.20 + 
+    skillsScore * 0.20 +         // Skills match is rewarded more
+    experienceScore * 0.10 +     // Seniority is critical but less weighted in total score
+    impactScore * 0.10           // Impact metrics carry weight for elite 90+ scores
   );
 
   const keywordDensity = calculateKeywordDensity(resumeText, allMatchedKeywords);
@@ -261,8 +261,8 @@ function calculateSkillsScore(
 }
 
 function calculateExperienceScore(yearsFound: number | null, yearsRequired: number | null): number {
-  if (yearsRequired === null) return 85; 
-  if (yearsFound === null) return 40;
+  if (yearsRequired === null) return 90; // Higher baseline if JD doesn't specify requirements
+  if (yearsFound === null) return 75; // Forgiving baseline if years aren't explicitly stated but resume is structuraly sound
 
   // Exact or Close Match (Perfect Seniority)
   if (yearsFound >= yearsRequired && yearsFound <= yearsRequired + 3) {
@@ -314,6 +314,8 @@ function extractYearsOfExperience(text: string): number | null {
     /(?:over\s*)?(\d+)\+?\s*(?:yrs?|years?)\s*(?:of\s*)?exp/i,
     /experience[:\s]+(\d+)\+?\s*(?:yrs?|years?)/i,
     /(\d+\.?\d*)\s*(?:yrs?|years?)/i,               // Matches "9.5 years"
+    /(\d+)\s*years\s*of\s*professional\s*experience/i,
+    /total\s*experience[:\s]*(\d+)/i,
   ];
 
   for (const pattern of patterns) {

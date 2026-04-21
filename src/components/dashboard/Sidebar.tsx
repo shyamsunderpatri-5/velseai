@@ -39,6 +39,11 @@ const navItems = [
     icon: Target,
   },
   {
+    title: "Story Bank",
+    href: "/story-bank",
+    icon: BookOpen,
+  },
+  {
     title: "Settings",
     href: "/settings",
     icon: Settings,

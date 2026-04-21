@@ -92,7 +92,7 @@ export async function analyzeResume(
       low_priority: mergedSuggestions.slice(7, 10),
     },
     summary: aiResult?.summary || "Structural analysis complete. See suggestions below for optimization.",
-    match_level: finalOverallScore >= 85 ? "excellent" : finalOverallScore >= 70 ? "good" : finalOverallScore >= 40 ? "fair" : "poor",
+    match_level: finalOverallScore >= 90 ? "elite" : finalOverallScore >= 75 ? "expert" : finalOverallScore >= 60 ? "good" : finalOverallScore >= 40 ? "fair" : "poor",
     seniority_analysis: seniorityAnalysis,
     readability_analysis: algoResult.readability_analysis,
     impact_score: algoResult.impact_score,

@@ -185,7 +185,15 @@ export function ResumeEditor({ initialResume }: ResumeEditorProps) {
   const handleExportPDF = async () => {
     toast.loading("Generating PDF...", { id: "pdf-export" });
     try {
-      const response = await fetch(`/api/resume/export-pdf?resumeId=${resumeId}&templateId=${selectedTemplate}`);
+      const response = await fetch(`/api/resume/export-pdf`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          content, 
+          templateId: selectedTemplate,
+          filename: title.replace(/[^a-z0-9]/gi, "-").toLowerCase()
+        })
+      });
       if (!response.ok) throw new Error("Failed to generate PDF");
 
       const blob = await response.blob();
