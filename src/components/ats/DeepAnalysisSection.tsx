@@ -5,7 +5,6 @@ import { AlertTriangle, Sparkles, Download, Loader2 as Spinner } from "lucide-re
 import { Button } from "@/components/ui/button";
 import { MissingIntelligenceTable } from "./MissingIntelligenceTable";
 import { FixGuideTable } from "./FixGuideTable";
-import { ActiveCommandPanel } from "./ActiveCommandPanel";
 
 import { toast } from "react-hot-toast";
 
@@ -130,12 +129,16 @@ export function DeepAnalysisSection({
         </div>
       )}
 
-      {/* Active Command Hub (New) */}
-      <ActiveCommandPanel 
-        jobTitle={lastData?.jobTitle || "Professional"}
-        companyName={lastData?.companyName || "Target Company"}
-        overallScore={result.overall_score}
-      />
+      {/* Tip: Go to Outreach Hub for LinkedIn & negotiation scripts */}
+      <div className="flex items-center gap-3 p-4 rounded-2xl border border-blue-500/10 bg-blue-500/5">
+        <div className="w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" />
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">
+          Need outreach scripts or negotiation playbooks?{" "}
+          <a href="../outreach" className="text-blue-400 hover:text-blue-300 underline underline-offset-2 transition-colors">
+            Open Outreach Hub →
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

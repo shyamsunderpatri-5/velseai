@@ -88,12 +88,7 @@ interface ATSResult {
 }
 
 
-import { useComparisonStore } from "@/stores/comparisonStore";
-import { MultiJDMatcher } from "@/components/ats/MultiJDMatcher";
-import { LinkedInOptimizer } from "@/components/ats/LinkedInOptimizer";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DiscoveryInbox } from "@/components/ats/DiscoveryInbox";
-import { FollowUpRadar } from "@/components/ats/FollowUpRadar";
+
 
 export function ATSCheckerClient() {
   const t = useTranslations("atsChecker");
@@ -105,12 +100,8 @@ export function ATSCheckerClient() {
   const [error, setError] = React.useState<string | null>(null);
   const [scanCount, setScanCount] = React.useState(0);
   const [lastData, setLastData] = React.useState<any>(null);
-  const [activeTab, setActiveTab] = React.useState<"single" | "compare" | "discovery">("single");
   const [activeResumeId, setActiveResumeId] = React.useState<string | null>(null);
-  const router = useRouter();
   const supabase = createClient();
-  
-  const { jobs: comparisonJobs, isBatchAnalyzing } = useComparisonStore();
 
   // Load scan count from localStorage on mount
   React.useEffect(() => {
@@ -210,226 +201,138 @@ export function ATSCheckerClient() {
     }
   };
 
-  // Removed PDF generation handling (handleDownloadPdf)
-
-  // Build multi-radar datasets if jobs are available
-  const radarDatasets = React.useMemo(() => {
-    if (activeTab === "compare" && comparisonJobs.length > 0) {
-      const colors = ["124, 58, 237", "52, 211, 153", "251, 191, 36", "248, 113, 113", "59, 130, 246"];
-      return comparisonJobs
-        .filter(j => j.analysis)
-        .map((j, i) => ({
-          label: j.title || `Target ${i + 1}`,
-          scores: {
-            Keywords: j.analysis!.keyword_score,
-            Format: j.analysis!.format_score,
-            Skills: j.analysis!.skills_score,
-            Experience: j.analysis!.experience_score,
-            Impact: (j.analysis as any).impact_score || 0,
-            Readability: (j.analysis as any).readability_score || 0,
-          },
-          color: colors[i % colors.length]
-        }));
-    }
-    return null;
-  }, [comparisonJobs, activeTab]);
+  // Single-mode only — Discovery and Outreach are dedicated sidebar pages
 
   return (
     <div className="space-y-8 animate-in fade-in duration-1000">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">Privacy Shield Active</span>
-          </div>
-          {activeTab === "compare" && (
-            <div className="px-3 py-1.5 rounded-xl border border-violet-500/30 bg-violet-600/10 flex items-center gap-2">
-              <Zap className="w-4 h-4 text-violet-400" />
-              <span className="text-[11px] font-black text-violet-400 uppercase tracking-widest">Viral Mode Active</span>
+      {/* Page header badge */}
+      <div className="flex items-center gap-3">
+        <div className="px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 backdrop-blur-xl flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span className="text-[11px] font-black text-emerald-400 uppercase tracking-widest">Privacy Shield Active</span>
+        </div>
+      </div>
+
+      {/* Core Scanner — Form + Results side by side */}
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Input Form */}
+        <div className="space-y-6">
+          {scanCount > 0 && !result && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/40">
+                    <Zap className="w-4 h-4 text-white animate-pulse" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-tight">Unlock The $9 Sprint Pass</h4>
+                    <p className="text-[9px] text-white/50 uppercase tracking-[0.2em]">Unlimited AI Audits • 30 Day Access</p>
+                  </div>
+                </div>
+                <Link href="/pricing">
+                  <Button size="sm" className="bg-white text-black hover:bg-white/90 font-black text-[9px] h-8 px-4 rounded-xl uppercase tracking-widest">
+                    ACTIVATE
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
-        </div>
-        <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="bg-white/[0.03] p-1 rounded-2xl border border-white/5">
-          <TabsList className="bg-transparent border-none gap-1">
-            <TabsTrigger value="single" className="rounded-xl data-[state=active]:bg-white data-[state=active]:text-black font-black text-[10px] uppercase tracking-widest h-9 px-6 transition-all">
-              Manual Audit
-            </TabsTrigger>
-            <TabsTrigger value="compare" className="rounded-xl data-[state=active]:bg-violet-600 data-[state=active]:text-white font-black text-[10px] uppercase tracking-widest h-9 px-6 transition-all flex items-center gap-2">
-              <Users className="w-3.5 h-3.5" /> Viral Match
-            </TabsTrigger>
-            <TabsTrigger value="discovery" className="rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-black text-[10px] uppercase tracking-widest h-9 px-6 transition-all flex items-center gap-2">
-              <RadioTower className="w-3.5 h-3.5" /> Discovery Hub
-            </TabsTrigger>
-            <TabsTrigger value="nurture" className="rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white font-black text-[10px] uppercase tracking-widest h-9 px-6 transition-all flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Nurture Radar
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-
-      <div className="space-y-12">
-        <Tabs value={activeTab} className="border-none bg-transparent p-0 shadow-none">
-          <TabsContent value="single" className="mt-0 border-none p-0 focus-visible:ring-0">
-            <div className="grid lg:grid-cols-2 gap-8">
-              {/* Input Form Area */}
-              <div className="space-y-6">
-                {scanCount > 0 && !result && (
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-violet-600/20 to-fuchsia-600/20 border border-violet-500/30 font-sans">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/40">
-                          <Zap className="w-4 h-4 text-white animate-pulse" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-white uppercase tracking-tight">Unlock The $9 Sprint Pass</h4>
-                          <p className="text-[9px] text-white/50 uppercase tracking-[0.2em]">Unlimited AI Audits • 30 Day Access</p>
-                        </div>
-                      </div>
-                      <Link href="/pricing">
-                        <Button size="sm" className="bg-white text-black hover:bg-white/90 font-black text-[9px] h-8 px-4 rounded-xl uppercase tracking-widest">
-                          ACTIVATE
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                <Card className="bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl relative overflow-hidden group rounded-[2rem]">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                        <FileText className="w-4 h-4 text-violet-500" />
-                      </div>
-                      {result ? "Refine Protocol" : "Deep Audit Initiator"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ATSCheckerForm
-                      onSubmit={handleSubmit}
-                      isLoading={isLoading}
-                      error={error}
-                      initialValue={lastData}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Results Area */}
-              <Card className={cn(
-                "bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl transition-all duration-700 overflow-hidden rounded-[2rem]",
-                !result && "opacity-50 grayscale select-none pointer-events-none"
-              )}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Zap className="w-4 h-4 text-violet-500" />
-                    </div>
-                    {result ? "Neural Audit Results" : "Awaiting Strategy Analysis"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="pt-4">
-                  {result ? (
-                    <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-700">
-                      <div className="bg-white/[0.01] rounded-[2rem] border border-white/5 p-8 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                          <Sparkles className="w-20 h-20" />
-                        </div>
-                        
-                        <div className="flex flex-col items-center justify-center space-y-4">
-                          <div className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-400 mb-2">Neural match score</div>
-                          <div className="text-8xl font-black text-white tracking-tighter">
-                            {Math.round(result.overall_score)}<span className="text-violet-500 text-4xl">%</span>
-                          </div>
-                          <div className={cn(
-                            "px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-[0.2em]",
-                            result.overall_score >= 90 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" :
-                            result.overall_score >= 75 ? "border-blue-500/30 bg-blue-500/10 text-blue-400" :
-                            "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                          )}>
-                            {result.overall_score >= 90 ? "ELITE PROTOCOL: PROCEED" :
-                             result.overall_score >= 75 ? "EXPERT PROTOCOL: OPTIMIZE" :
-                             "STANDARD PROTOCOL: NEEDS WORK"}
-                          </div>
-                          <Progress value={result.overall_score} className="w-64 h-2 bg-zinc-900" />
-                        </div>
-                      </div>
-
-                      <ATSScoreCard
-                        score={result.overall_score}
-                        subScores={[
-                          { label: "Keyword Match", value: result.keyword_score, icon: <Zap className="w-3.5 h-3.5" /> },
-                          { label: "Institutional Format", value: result.format_score, icon: <Shield className="w-3.5 h-3.5" /> },
-                          { label: "Skills Radar", value: result.skills_score, icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
-                          { label: "Market Impact", value: result.impact_score || 0, icon: <Zap className="w-3.5 h-3.5 text-amber-400" /> },
-                        ]}
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center space-y-6">
-                      <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
-                        <FileSearch className="w-8 h-8 text-white/10" />
-                      </div>
-                      <div className="space-y-2">
-                        <h3 className="font-bold text-lg text-white uppercase tracking-tight">Initiate Audit Protocol</h3>
-                        <p className="text-white/40 max-w-xs mx-auto text-[10px] font-bold uppercase tracking-widest leading-relaxed">
-                          Paste your resume and target JD to reveal neural match intelligence
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {result && (
-              <DeepAnalysisSection 
-                result={result}
-                fixResult={fixResult}
-                onGenerateProtocol={generateOptimizationProtocol}
-                isGenerating={isGenerating}
-                lastData={lastData}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="compare" className="mt-0 border-none p-0 focus-visible:ring-0">
-            <div className="grid lg:grid-cols-2 gap-8 items-start">
-              <Card className="bg-white/[0.02] border-white/5 rounded-[2.5rem] p-8 space-y-8">
-                <div className="flex flex-col items-center text-center space-y-2">
-                  <h3 className="text-xl font-black text-white uppercase tracking-widest">Viral Comparison Radar</h3>
-                  <p className="text-[10px] text-white/30 font-bold uppercase tracking-[0.2em]">Visualizing Performance Overlap across Multiple Dimensions</p>
+          <Card className="bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl relative overflow-hidden rounded-[2rem]">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-violet-500" />
                 </div>
-                {radarDatasets && radarDatasets.length > 0 ? (
-                  <ScoreRadarChart size={320} datasets={radarDatasets} />
-                ) : (
-                  <div className="h-[320px] flex flex-col items-center justify-center text-center space-y-4 opacity-20">
-                    <div className="w-16 h-16 rounded-full border-2 border-dashed border-white flex items-center justify-center animate-spin-slow" />
-                    <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Analysis Data...</p>
+                {result ? "Refine Protocol" : "Deep Audit Initiator"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ATSCheckerForm
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+                error={error}
+                initialValue={lastData}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Results */}
+        <Card className={cn(
+          "bg-white/[0.02] border-white/5 backdrop-blur-3xl shadow-2xl transition-all duration-700 overflow-hidden rounded-[2rem]",
+          !result && "opacity-50 grayscale select-none pointer-events-none"
+        )}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                <Zap className="w-4 h-4 text-violet-500" />
+              </div>
+              {result ? "Neural Audit Results" : "Awaiting Strategy Analysis"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {result ? (
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-8 duration-700">
+                <div className="bg-white/[0.01] rounded-[2rem] border border-white/5 p-8 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                    <Sparkles className="w-20 h-20" />
                   </div>
-                )}
-              </Card>
-              <LinkedInOptimizer />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="discovery" className="mt-0 border-none p-0 focus-visible:ring-0">
-             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <DiscoveryInbox onAudit={(url) => {
-                  setLastData({ ...lastData, jobDescription: url });
-                  setActiveTab("single");
-                  toast.success("Ready for Audit: Target JD loaded from Discovery.");
-                }} />
-             </div>
-          </TabsContent>
-
-          <TabsContent value="nurture" className="mt-0 border-none p-0 focus-visible:ring-0">
-             <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
-                <FollowUpRadar />
-             </div>
-          </TabsContent>
-        </Tabs>
+                  <div className="flex flex-col items-center justify-center space-y-4">
+                    <div className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-400 mb-2">Neural match score</div>
+                    <div className="text-8xl font-black text-white tracking-tighter">
+                      {Math.round(result.overall_score)}<span className="text-violet-500 text-4xl">%</span>
+                    </div>
+                    <div className={cn(
+                      "px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-[0.2em]",
+                      result.overall_score >= 90 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" :
+                      result.overall_score >= 75 ? "border-blue-500/30 bg-blue-500/10 text-blue-400" :
+                      "border-amber-500/30 bg-amber-500/10 text-amber-400"
+                    )}>
+                      {result.overall_score >= 90 ? "ELITE PROTOCOL: PROCEED" :
+                       result.overall_score >= 75 ? "EXPERT PROTOCOL: OPTIMIZE" :
+                       "STANDARD PROTOCOL: NEEDS WORK"}
+                    </div>
+                    <Progress value={result.overall_score} className="w-64 h-2 bg-zinc-900" />
+                  </div>
+                </div>
+                <ATSScoreCard
+                  score={result.overall_score}
+                  subScores={[
+                    { label: "Keyword Match", value: result.keyword_score, icon: <Zap className="w-3.5 h-3.5" /> },
+                    { label: "Institutional Format", value: result.format_score, icon: <Shield className="w-3.5 h-3.5" /> },
+                    { label: "Skills Radar", value: result.skills_score, icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> },
+                    { label: "Market Impact", value: result.impact_score || 0, icon: <Zap className="w-3.5 h-3.5 text-amber-400" /> },
+                  ]}
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center space-y-6">
+                <div className="w-20 h-20 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center">
+                  <FileSearch className="w-8 h-8 text-white/10" />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="font-bold text-lg text-white uppercase tracking-tight">Initiate Audit Protocol</h3>
+                  <p className="text-white/40 max-w-xs mx-auto text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                    Paste your resume and target JD to reveal neural match intelligence
+                  </p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Deep Analysis — renders below after scan */}
+      {result && (
+        <DeepAnalysisSection
+          result={result}
+          fixResult={fixResult}
+          onGenerateProtocol={generateOptimizationProtocol}
+          isGenerating={isGenerating}
+          lastData={lastData}
+        />
+      )}
     </div>
   );
 }
