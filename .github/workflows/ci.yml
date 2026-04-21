@@ -1,0 +1,52 @@
+name: CI — Build, Lint & Type Check
+
+on:
+  push:
+    branches: [master, main, dev]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Required to prevent Next.js build from crashing on missing env vars
+      # These are dummy values for CI — real values live in Vercel/prod secrets
+      NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: placeholder-service-key
+      GROQ_API_KEY: placeholder-groq
+      OPENAI_API_KEY: placeholder-openai
+      GOOGLE_GENERATIVE_AI_API_KEY: placeholder-google
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (tsc --noEmit)
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Build
+        run: npm run build
+        env:
+          # Skip Sentry source map upload in CI (no SENTRY_AUTH_TOKEN needed)
+          SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARN: true
