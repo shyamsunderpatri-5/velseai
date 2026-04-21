@@ -1,31 +1,37 @@
-import puppeteer from "puppeteer";
-
 /**
- * Premium PDF Generation Service (Puppeteer Edition)
+ * Premium PDF Generation Service — Vercel-Compatible
  * -------------------------------------------------------
- * Switched from Playwright to Puppeteer to align with existing
- * project dependencies and eliminate the build-breaking import error.
- *
- * Features:
- * - ATS normalization (anti-mojibake)
- * - Space Grotesk + DM Sans premium typography
- * - Institutional A4 formatting
+ * Uses environment-aware browser launch:
+ *  - LOCAL (dev): full `puppeteer` (bundled Chromium, no extra config)
+ *  - PRODUCTION (Vercel): `puppeteer-core` + `@sparticuz/chromium`
+ *    (Vercel's 250MB function limit blocks full puppeteer's Chromium binary)
  */
+
+async function getBrowser() {
+  if (process.env.NODE_ENV === "production") {
+    const chromium = (await import("@sparticuz/chromium")).default;
+    const puppeteerCore = (await import("puppeteer-core")).default;
+    return puppeteerCore.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: true,
+    });
+  } else {
+    const puppeteer = (await import("puppeteer")).default;
+    return puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
+}
 
 export async function generatePremiumPDF(html: string, _outputPath: string): Promise<Buffer> {
   // 1. ATS Normalization (Anti-mojibake)
   const normalizedHtml = normalizeTextForATS(html);
 
-  // 2. Puppeteer Rendering
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-gpu",
-    ],
-  });
+  // 2. Environment-aware browser launch
+  const browser = await getBrowser();
 
   try {
     const page = await browser.newPage();
