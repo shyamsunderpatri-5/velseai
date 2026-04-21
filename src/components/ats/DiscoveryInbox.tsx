@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Radar, 
+  RadioTower, 
   MapPin, 
   ExternalLink, 
   CheckCircle2, 
@@ -104,7 +104,7 @@ export function DiscoveryInbox({ onAudit }: DiscoveryInboxProps) {
       <div className="flex items-center justify-between">
          <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-violet-600/10 text-violet-500 border border-violet-500/20">
-               <Radar className="w-5 h-5" />
+               <RadioTower className="w-5 h-5" />
             </div>
             <div>
                <h2 className="text-lg font-black text-white uppercase tracking-tight">Discovery Inbox</h2>

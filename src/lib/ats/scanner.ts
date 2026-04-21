@@ -1,4 +1,4 @@
-import { createClient } from "../supabase/server";
+import { createServiceClient } from "../supabase/server";
 
 /**
  * Milestone 3: Portal Scanner Engine
@@ -56,7 +56,7 @@ async function parallelScan(targets: DiscoveryTarget[], limit: number, scanFn: (
 }
 
 export async function runDiscoveryScan() {
-  const supabase = await createClient();
+  const supabase = await createServiceClient();
   
   // 1. Load institutional dedup data (to avoid reposts)
   const { data: existingLeads } = await supabase
